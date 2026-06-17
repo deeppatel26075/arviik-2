@@ -8,7 +8,7 @@ import { ArrowRight, Lock, Mail, User, Phone } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, profile, loading, signInMock } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   // Tab state
   const [isRegister, setIsRegister] = useState(false);
@@ -61,20 +61,6 @@ export default function LoginPage() {
         setIsRegister(false);
         setPassword('');
       } else {
-        // Local bypass for mock testing
-        const isBypassAdmin = email.toLowerCase() === 'admin@arviik.com' && password === 'admin123';
-        const isBypassCustomer = email.toLowerCase() === 'customer@arviik.com' && password === 'customer123';
-        
-        if (isBypassAdmin || isBypassCustomer) {
-          signInMock(email);
-          if (isBypassAdmin) {
-            router.push('/admin');
-          } else {
-            router.push('/profile');
-          }
-          return;
-        }
-
         // Sign In
         const { data, error } = await supabase.auth.signInWithPassword({
           email,

@@ -30,27 +30,28 @@ export async function POST(request: Request) {
       console.warn('Failed to load DB payment config in verify:', e);
     }
 
-    const isLive = paymentConfig.payment_mode === 'live';
-    const key_secret = isLive
-      ? (paymentConfig.key_secret || process.env.RAZORPAY_KEY_SECRET || 'mockkeysecret456')
-      : 'mockkeysecret456';
-    
-    // Create text combination
-    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    
-    // Generate HMAC hex digest
-    const generated_signature = crypto
-      .createHmac('sha256', key_secret)
-      .update(text)
-      .digest('hex');
+    const key_secret = paymentConfig.key_secret || process.env.RAZORPAY_KEY_SECRET;
+    const isCod = razorpay_payment_id === 'pay_cod';
 
-    const isVerified = generated_signature === razorpay_signature;
+    if (!isCod) {
+      if (!key_secret) {
+        return NextResponse.json({ error: 'Razorpay Key Secret is missing.' }, { status: 400 });
+      }
 
-    // Check if it's a mock key bypass (for demo/sandbox testing or Cash on Delivery)
-    const isMock = !isLive || key_secret === 'mockkeysecret456' || razorpay_signature === 'mock_signature' || razorpay_order_id?.startsWith('order_mock_') || razorpay_payment_id === 'pay_cod';
+      // Create text combination
+      const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+      
+      // Generate HMAC hex digest
+      const generated_signature = crypto
+        .createHmac('sha256', key_secret)
+        .update(text)
+        .digest('hex');
 
-    if (!isVerified && !isMock) {
-      return NextResponse.json({ error: 'Payment signature verification failed' }, { status: 400 });
+      const isVerified = generated_signature === razorpay_signature;
+
+      if (!isVerified) {
+        return NextResponse.json({ error: 'Payment signature verification failed' }, { status: 400 });
+      }
     }
 
     // 2. Insert into Database
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
       .from('orders')
       .insert({
         user_id: userId || null,
-        status: 'pending',
+        status: isCod ? 'cod_pending' : 'pending',
         total_amount: total,
         coupon_id: coupon_db_id,
         shipping_name: shipping.name,
@@ -95,14 +96,6 @@ export async function POST(request: Request) {
 
     if (orderError || !orderData) {
       console.error('Error recording order in database:', orderError);
-      // Even if database logs error, we might be in demo mode. Let's return mock order ID in demo mode.
-      if (isMock) {
-        const mockOrderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-        return NextResponse.json({
-          message: 'Mock payment verified & order recorded (demo mode)',
-          orderId: mockOrderId,
-        });
-      }
       return NextResponse.json({ error: 'Failed to create order record' }, { status: 500 });
     }
 
@@ -141,11 +134,11 @@ export async function POST(request: Request) {
     // Insert payment record
     await supabase.from('payments').insert({
       order_id: orderId,
-      provider: 'razorpay',
+      provider: isCod ? 'cod' : 'razorpay',
       transaction_id: razorpay_payment_id,
-      signature: razorpay_signature,
+      signature: razorpay_signature || 'cod_signature',
       amount: total,
-      status: 'success',
+      status: isCod ? 'pending' : 'success',
     });
 
     // Mock send confirmation email

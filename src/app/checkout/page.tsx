@@ -41,11 +41,8 @@ export default function CheckoutPage() {
   const [completedOrderDetails, setCompletedOrderDetails] = useState<any>(null);
 
   // Payment config & states
-  const [paymentConfig, setPaymentConfig] = useState<any>({ payment_mode: 'simulation' });
+  const [paymentConfig, setPaymentConfig] = useState<any>({});
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
-  const [showSimulator, setShowSimulator] = useState(false);
-  const [simulatorTab, setSimulatorTab] = useState<'upi' | 'card'>('upi');
-  const [mockOrderId, setMockOrderId] = useState('');
 
   // Load payment config settings
   useEffect(() => {
@@ -126,56 +123,6 @@ export default function CheckoutPage() {
       }
     } catch (e) {
       console.error('Failed to update local order cache/inventory:', e);
-    }
-  };
-
-  const handleSimulatedPayment = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const simulatedPaymentId = `pay_mock_${Math.floor(100000 + Math.random() * 900000)}`;
-      
-      const verifyRes = await fetch('/api/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razorpay_payment_id: simulatedPaymentId,
-          razorpay_order_id: mockOrderId,
-          razorpay_signature: 'mock_signature',
-          shipping: { name, email, phone, address, city, state, pincode },
-          items: cart,
-          total: getCartTotal(),
-          couponId: coupon ? coupon.code : null,
-          userId: user?.id || null,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok) {
-        throw new Error(verifyData.error || 'Failed to verify simulated payment');
-      }
-
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
-
-      saveOrderLocally(verifyData.orderId, 'online');
-
-      setCompletedOrderDetails({
-        orderId: verifyData.orderId,
-        email,
-        total: getCartTotal(),
-      });
-      setShowSimulator(false);
-      setOrderCompleted(true);
-      clearCart();
-    } catch (err: any) {
-      console.error('Simulated verification failed:', err);
-      setErrorMsg(err.message || 'Simulated payment processing failed.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -283,19 +230,9 @@ export default function CheckoutPage() {
         throw new Error(orderData.error || 'Failed to initialize payment');
       }
 
-      const isLive = paymentConfig.payment_mode === 'live';
-
-      if (!isLive) {
-        // Simulation mode: Open custom payment simulator modal
-        setMockOrderId(orderData.id);
-        setShowSimulator(true);
-        setLoading(false);
-        return;
-      }
-
-      // Live mode: Open official Razorpay modal
+      // Open official Razorpay modal
       const options = {
-        key: paymentConfig.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid123',
+        key: paymentConfig.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'ARVIIK Streetwear',
@@ -649,149 +586,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-
-      {/* Custom Mock Payment Simulator Modal */}
-      <AnimatePresence>
-        {showSimulator && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-[#0c0c0b] text-white border border-amber-500/20 rounded-xs shadow-2xl p-6 relative space-y-6 overflow-hidden"
-            >
-              {/* Gold foiled decorative border */}
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-600" />
-              
-              <div className="flex justify-between items-center pb-3 border-b border-stone-850">
-                <div className="flex items-center space-x-2">
-                  <ShieldCheck className="h-4.5 w-4.5 text-amber-400" />
-                  <span className="font-syne font-bold uppercase tracking-wider text-xs">
-                    ARVIIK PAYMENT GATEWAY
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowSimulator(false)}
-                  className="text-stone-400 hover:text-white transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Amount Display */}
-              <div className="text-center bg-stone-900/50 p-4 border border-stone-850 rounded-xs space-y-1">
-                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Amount to Pay</p>
-                <p className="text-2xl font-syne font-extrabold text-white">{formatPrice(getCartTotal())}</p>
-              </div>
-
-              {/* Tabs */}
-              <div className="grid grid-cols-2 gap-2 border-b border-stone-900 pb-3">
-                <button
-                  type="button"
-                  onClick={() => setSimulatorTab('upi')}
-                  className={`py-2 text-[10px] font-bold uppercase tracking-wider text-center border-b-2 transition-all ${
-                    simulatorTab === 'upi' ? 'border-amber-400 text-amber-400' : 'border-transparent text-stone-500 hover:text-stone-300'
-                  }`}
-                >
-                  UPI TRANSFER
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSimulatorTab('card')}
-                  className={`py-2 text-[10px] font-bold uppercase tracking-wider text-center border-b-2 transition-all ${
-                    simulatorTab === 'card' ? 'border-amber-400 text-amber-400' : 'border-transparent text-stone-500 hover:text-stone-300'
-                  }`}
-                >
-                  CARD METHOD
-                </button>
-              </div>
-
-              {/* Tab Contents */}
-              {simulatorTab === 'upi' ? (
-                <div className="space-y-5 text-center flex flex-col items-center justify-center">
-                  <p className="text-[10px] text-stone-400 tracking-wide leading-relaxed">
-                    Scan dynamic QR Code using any UPI app (GPay, PhonePe, Paytm) to initiate test transfer.
-                  </p>
-                  <div className="bg-white p-3 rounded-xs border border-amber-500/20 shadow-inner">
-                    <QrCode className="h-32 w-32 text-stone-950" />
-                  </div>
-                  <div className="text-[10px] text-stone-400 font-mono tracking-widest">
-                    VPA: arviik.atelier@upi
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSimulatedPayment}
-                    disabled={loading}
-                    className="w-full bg-amber-500 text-stone-950 text-xs font-bold uppercase tracking-widest py-3.5 hover:bg-amber-400 transition-colors rounded-xs shadow-md"
-                  >
-                    {loading ? 'Verifying Transfer...' : 'Simulate UPI Payment Success'}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-[10px] text-stone-400 tracking-wide text-center">
-                    Enter any test card details to process transaction safely.
-                  </p>
-                  <div className="space-y-3 font-sans text-stone-300 text-xs">
-                    <div className="space-y-1">
-                      <label className="text-[9px] text-stone-550 font-bold uppercase tracking-wider">Cardholder Name</label>
-                      <input
-                        type="text"
-                        disabled
-                        value={name}
-                        className="w-full bg-stone-900 border border-stone-800 px-3 py-2 text-xs text-stone-350 focus:outline-none rounded-xs select-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] text-stone-550 font-bold uppercase tracking-wider">Card Number</label>
-                      <input
-                        type="text"
-                        disabled
-                        value="4312 •••• •••• 9876"
-                        className="w-full bg-stone-900 border border-stone-800 px-3 py-2 text-xs text-stone-350 focus:outline-none rounded-xs select-none"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[9px] text-stone-550 font-bold uppercase tracking-wider">Expiry Date</label>
-                        <input
-                          type="text"
-                          disabled
-                          value="12/29"
-                          className="w-full bg-stone-900 border border-stone-800 px-3 py-2 text-xs text-stone-350 focus:outline-none rounded-xs text-center select-none"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] text-stone-550 font-bold uppercase tracking-wider">CVV Code</label>
-                        <input
-                          type="password"
-                          disabled
-                          value="•••"
-                          className="w-full bg-stone-900 border border-stone-800 px-3 py-2 text-xs text-stone-350 focus:outline-none rounded-xs text-center select-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSimulatedPayment}
-                    disabled={loading}
-                    className="w-full bg-amber-500 text-stone-950 text-xs font-bold uppercase tracking-widest py-3.5 hover:bg-amber-400 transition-colors rounded-xs shadow-md mt-2"
-                  >
-                    {loading ? 'Authorising...' : 'Authorise Test Transaction'}
-                  </button>
-                </div>
-              )}
-
-              {/* Secure Footer */}
-              <div className="text-center text-[9px] text-stone-550 uppercase tracking-widest font-medium border-t border-stone-850 pt-3 flex items-center justify-center space-x-1">
-                <span>🔐 Sandbox Secured Encryption 256-Bit</span>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

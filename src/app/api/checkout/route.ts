@@ -25,24 +25,14 @@ export async function POST(request: Request) {
       console.warn('Failed to load database payment config, using defaults:', e);
     }
 
-    const isLive = paymentConfig.payment_mode === 'live';
-    const key_id = isLive
-      ? (paymentConfig.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid123')
-      : 'rzp_test_mockkeyid123';
-    const key_secret = isLive
-      ? (paymentConfig.key_secret || process.env.RAZORPAY_KEY_SECRET || 'mockkeysecret456')
-      : 'mockkeysecret456';
+    const key_id = paymentConfig.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const key_secret = paymentConfig.key_secret || process.env.RAZORPAY_KEY_SECRET;
 
-    if (!isLive) {
-      // Demo simulation mode - Return mock order object instantly
-      return NextResponse.json({
-        id: `order_mock_${Math.floor(100000 + Math.random() * 900000)}`,
-        amount: Math.round(amount * 100),
-        currency,
-        receipt: `receipt_order_${Date.now()}`,
-        status: 'created',
-        isMock: true
-      });
+    if (!key_id || !key_secret) {
+      return NextResponse.json(
+        { error: 'Razorpay configurations are missing. Please enter Key ID and Secret in settings.' },
+        { status: 400 }
+      );
     }
 
     const instance = new Razorpay({

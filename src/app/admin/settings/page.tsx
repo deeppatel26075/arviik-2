@@ -20,7 +20,7 @@ export default function AdminSettings() {
   const [nextDropDate, setNextDropDate] = useState('2026-06-25T18:00');
 
   // Payment configuration
-  const [paymentMode, setPaymentMode] = useState('simulation'); // 'simulation' | 'live'
+  const [paymentMode, setPaymentMode] = useState('live'); // 'simulation' | 'live'
   const [razorpayKeyId, setRazorpayKeyId] = useState('');
   const [razorpayKeySecret, setRazorpayKeySecret] = useState('');
 
@@ -599,44 +599,30 @@ export default function AdminSettings() {
             <div className="space-y-4 pt-4 border-t border-stone-100">
               <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block border-b pb-1.5 font-syne">Payment Gateway Configurations</span>
               
-              <div className="space-y-1">
-                <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Checkout Payment Mode</label>
-                <select
-                  value={paymentMode}
-                  onChange={(e) => setPaymentMode(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
-                >
-                  <option value="simulation">Demo Simulation Mode (Bypass active keys)</option>
-                  <option value="live">Live Gateway Mode (Official Razorpay popup)</option>
-                </select>
-              </div>
-
-              {paymentMode === 'live' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Razorpay Key ID</label>
-                    <input
-                      type="text"
-                      required
-                      value={razorpayKeyId}
-                      onChange={(e) => setRazorpayKeyId(e.target.value)}
-                      placeholder="rzp_test_..."
-                      className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Razorpay Key Secret</label>
-                    <input
-                      type="password"
-                      required
-                      value={razorpayKeySecret}
-                      onChange={(e) => setRazorpayKeySecret(e.target.value)}
-                      placeholder="••••••••••••••••"
-                      className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-mono"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Razorpay Key ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={razorpayKeyId}
+                    onChange={(e) => setRazorpayKeyId(e.target.value)}
+                    placeholder="rzp_test_..."
+                    className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-mono"
+                  />
                 </div>
-              )}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Razorpay Key Secret</label>
+                  <input
+                    type="password"
+                    required
+                    value={razorpayKeySecret}
+                    onChange={(e) => setRazorpayKeySecret(e.target.value)}
+                    placeholder="••••••••••••••••"
+                    className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-mono"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Section: Website Styling */}
