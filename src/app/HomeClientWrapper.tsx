@@ -276,34 +276,41 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
     <div className="w-full transition-all duration-300" style={wrapperStyle}>
       {/* 1. HERO SECTION */}
       <section className="relative h-[90vh] w-full flex items-center justify-center bg-stone-900 overflow-hidden">
-        {/* Loop video background (with image fallback) */}
+        {/* Loop video background with image fallback base layer */}
         <div className="absolute inset-0 z-0">
-          {(heroConfig.video_url || 'https://assets.mixkit.co/videos/preview/mixkit-waving-black-glossy-fabric-42296-large.mp4') ? (
-            <video
-              src={heroConfig.video_url || 'https://assets.mixkit.co/videos/preview/mixkit-waving-black-glossy-fabric-42296-large.mp4'}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="object-cover w-full h-full opacity-35"
-            />
-          ) : heroConfig.image_url?.startsWith('data:') ? (
+          {/* Base Image Layer */}
+          {heroConfig.image_url?.startsWith('data:') ? (
             <img
               src={heroConfig.image_url}
-              alt="ARVIIK Streetwear Hero"
-              className="object-cover w-full h-full opacity-45"
+              alt="ARVIIK Streetwear Hero Fallback"
+              className="object-cover w-full h-full opacity-40 absolute inset-0"
             />
           ) : (
             <Image
               src={heroConfig.image_url || '/products/mard-paisa-maroon.jpg'}
-              alt="ARVIIK Streetwear Hero"
+              alt="ARVIIK Streetwear Hero Fallback"
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-45"
+              className="object-cover opacity-40 absolute inset-0"
             />
           )}
-          <div className="absolute inset-0 bg-stone-950/45" />
+
+          {/* Absolute Video Overlay Layer */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="object-cover w-full h-full opacity-35 absolute inset-0"
+          >
+            <source
+              src={heroConfig.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
+              type="video/mp4"
+            />
+          </video>
+
+          <div className="absolute inset-0 bg-stone-950/45 z-10" />
         </div>
 
         {/* Hero Content */}
