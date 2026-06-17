@@ -57,20 +57,29 @@ export default function AdminProducts() {
 
       // Check categories
       let loadedCats = [];
-      const storedCats = localStorage.getItem('arviik_custom_categories');
-      if (storedCats) {
-        loadedCats = JSON.parse(storedCats);
-      } else {
-        try {
-          const { data: cats } = await supabase.from('categories').select('*');
-          if (cats && cats.length > 0) {
-            loadedCats = cats;
-            localStorage.setItem('arviik_custom_categories', JSON.stringify(cats));
-          }
-        } catch (catErr) {
-          console.error('Failed to load DB categories:', catErr);
+      try {
+        const { data: cats, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name', { ascending: true });
+        
+        if (error) throw error;
+        if (cats && cats.length > 0) {
+          loadedCats = cats;
+          localStorage.setItem('arviik_custom_categories', JSON.stringify(cats));
+        } else {
+          // If query worked but returned empty, check local storage
+          const storedCats = localStorage.getItem('arviik_custom_categories');
+          if (storedCats) loadedCats = JSON.parse(storedCats);
+        }
+      } catch (catErr) {
+        console.warn('Failed to load DB categories, reading local cache:', catErr);
+        const storedCats = localStorage.getItem('arviik_custom_categories');
+        if (storedCats) {
+          loadedCats = JSON.parse(storedCats);
         }
       }
+
       if (loadedCats.length === 0) {
         loadedCats = [
           { id: 'cat-001', name: 'Graphic Prints', slug: 'graphic-prints' },

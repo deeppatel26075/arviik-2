@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 export default async function ShopPage() {
   let dbProducts = [];
   let dbCategories = [];
+  let dbSettings: any[] = [];
 
   try {
     // 1. Fetch categories
@@ -28,6 +29,13 @@ export default async function ShopPage() {
         inventory: prod.inventory || []
       }));
     }
+
+    // 3. Fetch settings
+    const { data: settingsData } = await supabase
+      .from('site_settings')
+      .select('*');
+    if (settingsData) dbSettings = settingsData;
+
   } catch (err) {
     console.error('Error fetching shop data from Supabase, using mocks:', err);
   }
@@ -40,6 +48,11 @@ export default async function ShopPage() {
     { id: 'cat-002', name: 'Minimalist Typo', slug: 'minimalist-typo' }
   ];
 
+  const settingsMap = dbSettings.reduce((acc: any, item: any) => {
+    acc[item.key] = item.value;
+    return acc;
+  }, {});
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <Suspense fallback={
@@ -47,7 +60,11 @@ export default async function ShopPage() {
           Loading drops...
         </div>
       }>
-        <ShopClient initialProducts={finalProducts as any} categories={finalCategories as any} />
+        <ShopClient 
+          initialProducts={finalProducts as any} 
+          categories={finalCategories as any} 
+          settings={settingsMap}
+        />
       </Suspense>
     </div>
   );

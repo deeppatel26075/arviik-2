@@ -9,10 +9,12 @@ import { ArrowRight, Star } from 'lucide-react';
 
 interface HomeClientWrapperProps {
   products: any[];
+  settings?: any;
 }
 
-export default function HomeClientWrapper({ products }: HomeClientWrapperProps) {
+export default function HomeClientWrapper({ products, settings }: HomeClientWrapperProps) {
   const [displayProducts, setDisplayProducts] = React.useState<any[]>(products);
+  const [activeSettings, setActiveSettings] = React.useState<any>(settings || {});
 
   React.useEffect(() => {
     try {
@@ -34,6 +36,134 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
     }
   }, [products]);
 
+  React.useEffect(() => {
+    try {
+      const storedSettings = localStorage.getItem('arviik_custom_settings');
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        setActiveSettings({
+          ...parsed,
+          ...settings // Server settings take precedence
+        });
+      } else if (settings && Object.keys(settings).length > 0) {
+        localStorage.setItem('arviik_custom_settings', JSON.stringify(settings));
+        setActiveSettings(settings);
+      } else {
+        const defaultSettings = {
+          hero_config: {
+            title: 'WEAR YOUR IDENTITY',
+            slogan: 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.',
+            image_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600'
+          },
+          story_config: {
+            title: 'Engineered Streetwear',
+            desc: 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity. Our oversized fits are engineered from custom-woven 240 GSM ring-spun cotton, creating a structure that holds its shape wash after wash.',
+            image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'
+          },
+          general_config: { bg_style: 'default', custom_bg_color: '#fafaf9', bg_image_url: '' },
+          gallery_config: {
+            img1: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600',
+            img2: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
+            img3: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600',
+            img4: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600',
+            img5: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=600',
+            img6: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600'
+          }
+        };
+        localStorage.setItem('arviik_custom_settings', JSON.stringify(defaultSettings));
+        setActiveSettings(defaultSettings);
+      }
+    } catch (e) {
+      console.error('Failed to load settings:', e);
+    }
+  }, [settings]);
+
+  // Extract section configurations
+  const heroConfig = activeSettings?.hero_config || {
+    title: 'WEAR YOUR IDENTITY',
+    slogan: 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.',
+    image_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600'
+  };
+
+  const storyConfig = activeSettings?.story_config || {
+    title: 'Engineered Streetwear',
+    desc: 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity.',
+    image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'
+  };
+
+  const bgConfig = activeSettings?.general_config || {
+    bg_style: 'default',
+    custom_bg_color: '#fafaf9',
+    bg_image_url: ''
+  };
+
+  const galleryConfig = activeSettings?.gallery_config || {};
+
+  const galleryImages = [
+    galleryConfig.img1 || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600',
+    galleryConfig.img2 || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
+    galleryConfig.img3 || 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600',
+    galleryConfig.img4 || 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600',
+    galleryConfig.img5 || 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=600',
+    galleryConfig.img6 || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600'
+  ];
+
+  // Determine dynamic background styling to apply to page wrapper
+  let wrapperStyle: React.CSSProperties = {};
+  let textModeClass = 'text-stone-900';
+  let cardBgClass = 'bg-white border-stone-200/50';
+  let mutedTextClass = 'text-stone-500';
+  let sectionBorderClass = 'border-stone-200';
+  let reviewBgClass = 'bg-stone-50';
+
+  if (bgConfig.bg_style === 'white') {
+    wrapperStyle = { backgroundColor: '#ffffff' };
+  } else if (bgConfig.bg_style === 'charcoal') {
+    wrapperStyle = { backgroundColor: '#0f0f0f', color: '#f5f5f4' };
+    textModeClass = 'text-stone-100';
+    cardBgClass = 'bg-stone-900 border-stone-850';
+    mutedTextClass = 'text-stone-400';
+    sectionBorderClass = 'border-stone-800';
+    reviewBgClass = 'bg-stone-900/40';
+  } else if (bgConfig.bg_style === 'sepia') {
+    wrapperStyle = { backgroundColor: '#f4efe6' };
+    textModeClass = 'text-stone-900';
+    cardBgClass = 'bg-[#fcfaf7] border-stone-200';
+    mutedTextClass = 'text-stone-600';
+    sectionBorderClass = 'border-stone-200';
+    reviewBgClass = 'bg-[#ebe5d8]';
+  } else if (bgConfig.bg_style === 'custom-color') {
+    wrapperStyle = { backgroundColor: bgConfig.custom_bg_color || '#fafaf9' };
+    
+    // Check luminance of custom hex code to set readable contrast
+    const isDark = (hex: string) => {
+      const c = (hex || '').replace('#', '');
+      if (c.length !== 6) return false;
+      const rgb = parseInt(c, 16);
+      const r = (rgb >> 16) & 0xff;
+      const g = (rgb >> 8) & 0xff;
+      const b = (rgb >> 0) & 0xff;
+      const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return luma < 135;
+    };
+
+    if (isDark(bgConfig.custom_bg_color)) {
+      wrapperStyle.color = '#f5f5f4';
+      textModeClass = 'text-stone-100';
+      cardBgClass = 'bg-black/15 border-white/5';
+      mutedTextClass = 'text-stone-400';
+      sectionBorderClass = 'border-white/10';
+      reviewBgClass = 'bg-black/10';
+    }
+  } else if (bgConfig.bg_style === 'custom-image' && bgConfig.bg_image_url) {
+    wrapperStyle = {
+      backgroundImage: `url(${bgConfig.bg_image_url})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    };
+  }
+
   // Animation variants
   const fadeIn: any = {
     hidden: { opacity: 0, y: 30 },
@@ -50,29 +180,28 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
     }
   };
 
-  const galleryImages = [
-    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600',
-    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
-    'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600',
-    'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600',
-    'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=600',
-    'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600'
-  ];
-
   return (
-    <div className="w-full">
+    <div className="w-full transition-all duration-300" style={wrapperStyle}>
       {/* 1. HERO SECTION */}
       <section className="relative h-[90vh] w-full flex items-center justify-center bg-stone-900 overflow-hidden">
         {/* Background Image with overlay */}
         <div className="absolute inset-0 z-0">
-          <Image
-            src="/products/mard-paisa-maroon.jpg"
-            alt="ARVIIK Streetwear Hero"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-45"
-          />
+          {heroConfig.image_url?.startsWith('data:') ? (
+            <img
+              src={heroConfig.image_url}
+              alt="ARVIIK Streetwear Hero"
+              className="object-cover w-full h-full opacity-45"
+            />
+          ) : (
+            <Image
+              src={heroConfig.image_url || '/products/mard-paisa-maroon.jpg'}
+              alt="ARVIIK Streetwear Hero"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-45"
+            />
+          )}
           <div className="absolute inset-0 bg-stone-950/45" />
         </div>
 
@@ -91,20 +220,18 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-syne font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-[0.1em] uppercase leading-tight"
+            className="font-syne font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-[0.05em] uppercase leading-tight"
           >
-            WEAR YOUR
-            <br />
-            <span className="text-stone-100">IDENTITY</span>
+            {heroConfig.title || 'WEAR YOUR IDENTITY'}
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="text-xs sm:text-sm tracking-widest text-stone-300 max-w-md mx-auto leading-relaxed"
+            className="text-xs sm:text-sm tracking-widest text-stone-300 max-w-md mx-auto leading-relaxed font-sans font-medium"
           >
-            Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.
+            {heroConfig.slogan || 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.'}
           </motion.p>
 
           <motion.div
@@ -131,19 +258,21 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeIn}
-          className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-stone-200 pb-5"
+          className={`flex flex-col sm:flex-row sm:items-end justify-between border-b ${sectionBorderClass} pb-5`}
         >
           <div>
             <span className="text-[10px] text-stone-400 font-bold tracking-[0.3em] uppercase">
               Summer Release 01
             </span>
-            <h2 className="font-syne font-extrabold text-2xl sm:text-3xl uppercase tracking-wider text-stone-900 mt-1">
+            <h2 className={`font-syne font-extrabold text-2xl sm:text-3xl uppercase tracking-wider ${textModeClass} mt-1`}>
               New Drops
             </h2>
           </div>
           <Link
             href="/shop"
-            className="inline-flex items-center space-x-1.5 text-xs font-bold uppercase tracking-widest text-stone-900 hover:opacity-75 transition-opacity mt-4 sm:mt-0"
+            className={`inline-flex items-center space-x-1.5 text-xs font-bold uppercase tracking-widest ${
+              bgConfig.bg_style === 'charcoal' ? 'text-white hover:text-stone-300' : 'text-stone-900 hover:opacity-75'
+            } transition-colors mt-4 sm:mt-0`}
           >
             <span>View All</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -184,15 +313,12 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
                   Our Philosophy
                 </span>
                 <h2 className="font-syne font-extrabold text-3xl sm:text-4xl uppercase tracking-wider text-white">
-                  Engineered Streetwear
+                  {storyConfig.title || 'Engineered Streetwear'}
                 </h2>
               </div>
-              <p className="text-stone-400 text-sm tracking-wide leading-relaxed font-light">
-                At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity. Our oversized fits are engineered from custom-woven 240 GSM ring-spun cotton, creating a structure that holds its shape wash after wash.
-              </p>
-              <p className="text-stone-400 text-sm tracking-wide leading-relaxed font-light">
-                Every print uses eco-friendly, premium high-density ink that fuses into the fabric rather than sitting on top, ensuring details remain vibrant over long timelines.
-              </p>
+              <div className="text-stone-400 text-sm tracking-wide leading-relaxed font-light font-sans space-y-4 whitespace-pre-line">
+                {storyConfig.desc || 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity.'}
+              </div>
               
               <div className="grid grid-cols-3 gap-6 pt-4 text-center border-t border-stone-900">
                 <div className="space-y-1">
@@ -216,15 +342,23 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="lg:col-span-6 relative aspect-4/5 w-full bg-stone-900 border border-stone-800"
+              className="lg:col-span-6 relative aspect-4/5 w-full bg-stone-900 border border-stone-850"
             >
-              <Image
-                src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800"
-                alt="Streetwear Detail Story"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover opacity-90"
-              />
+              {storyConfig.image_url?.startsWith('data:') ? (
+                <img
+                  src={storyConfig.image_url}
+                  alt="Streetwear Detail Story"
+                  className="object-cover w-full h-full opacity-90 absolute inset-0"
+                />
+              ) : (
+                <Image
+                  src={storyConfig.image_url || 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'}
+                  alt="Streetwear Detail Story"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover opacity-90"
+                />
+              )}
             </motion.div>
 
           </div>
@@ -232,13 +366,13 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
       </section>
 
       {/* 4. CUSTOMER REVIEWS */}
-      <section className="bg-stone-50 py-20">
+      <section className={`${reviewBgClass} py-20 transition-colors duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-1">
             <span className="text-[10px] text-stone-400 font-bold tracking-[0.3em] uppercase">
               Verifiable Feedback
             </span>
-            <h2 className="font-syne font-extrabold text-2xl uppercase tracking-wider text-stone-900">
+            <h2 className={`font-syne font-extrabold text-2xl uppercase tracking-wider ${textModeClass}`}>
               Community Reviews
             </h2>
           </div>
@@ -270,17 +404,17 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}
-                className="bg-white p-6 rounded-xs border border-stone-200/50 shadow-xs flex flex-col space-y-4"
+                className={`${cardBgClass} p-6 rounded-xs border shadow-xs flex flex-col space-y-4`}
               >
-                <div className="flex items-center text-stone-900">
+                <div className={`flex items-center ${bgConfig.bg_style === 'charcoal' ? 'text-amber-400' : 'text-stone-900'}`}>
                   {[...Array(review.stars)].map((_, starIdx) => (
-                    <Star key={starIdx} className="h-4 w-4 fill-stone-900" />
+                    <Star key={starIdx} className="h-4 w-4 fill-current text-current" />
                   ))}
                 </div>
-                <p className="text-xs text-stone-600 leading-relaxed italic">
+                <p className={`text-xs ${bgConfig.bg_style === 'charcoal' ? 'text-stone-300' : 'text-stone-650'} leading-relaxed italic font-sans`}>
                   "{review.text}"
                 </p>
-                <div className="pt-2 border-t border-stone-100 flex justify-between items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                <div className={`pt-2 border-t ${sectionBorderClass} flex justify-between items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest font-sans`}>
                   <span>{review.name}</span>
                   <span>{review.city}</span>
                 </div>
@@ -296,7 +430,7 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
           <span className="text-[10px] text-stone-400 font-bold tracking-[0.3em] uppercase">
             #ARVIIKLAB
           </span>
-          <h2 className="font-syne font-extrabold text-2xl uppercase tracking-wider text-stone-900">
+          <h2 className={`font-syne font-extrabold text-2xl uppercase tracking-wider ${textModeClass}`}>
             Instagram Gallery
           </h2>
         </div>
@@ -305,13 +439,21 @@ export default function HomeClientWrapper({ products }: HomeClientWrapperProps) 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
           {galleryImages.map((src, i) => (
             <div key={i} className="relative aspect-square w-full group overflow-hidden bg-stone-150">
-              <Image
-                src={src}
-                alt={`Instagram look ${i + 1}`}
-                fill
-                sizes="(max-width: 768px) 50vw, 16vw"
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-              />
+              {src.startsWith('data:') ? (
+                <img
+                  src={src}
+                  alt={`Instagram look ${i + 1}`}
+                  className="object-cover w-full h-full transition-transform duration-500 ease-out group-hover:scale-105"
+                />
+              ) : (
+                <Image
+                  src={src}
+                  alt={`Instagram look ${i + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 16vw"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                />
+              )}
               <div className="absolute inset-0 bg-stone-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                 <span className="text-white text-[10px] font-bold tracking-widest uppercase border border-white px-3 py-1.5 rounded-sm">
                   View Look

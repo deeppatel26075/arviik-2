@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { LayoutDashboard, ShoppingBag, ClipboardList, Settings, Store, LogOut, Tags, Users } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ClipboardList, Settings, Store, LogOut, Tags, Users, Layers } from 'lucide-react';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -14,6 +14,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Products', path: '/admin/products', icon: ClipboardList },
+    { name: 'Categories', path: '/admin/categories', icon: Layers },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingBag },
     { name: 'Coupons', path: '/admin/coupons', icon: Tags },
     { name: 'Customers', path: '/admin/customers', icon: Users },

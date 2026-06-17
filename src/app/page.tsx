@@ -101,31 +101,45 @@ export const MOCK_PRODUCTS = [
 
 export default async function HomePage() {
   let dbProducts = [];
+  let dbSettings: any[] = [];
   try {
-    const { data } = await supabase
+    const { data: prodData } = await supabase
       .from('products')
       .select('*, category:categories(name), product_images(image_url), inventory(size, quantity)')
       .eq('is_hidden', false)
       .limit(4);
     
-    if (data && data.length > 0) {
-      dbProducts = data.map(prod => ({
+    if (prodData && prodData.length > 0) {
+      dbProducts = prodData.map(prod => ({
         ...prod,
         category: prod.category ? { name: (prod.category as any).name } : undefined,
         product_images: prod.product_images || [],
         inventory: prod.inventory || []
       }));
     }
+
+    const { data: settingsData } = await supabase
+      .from('site_settings')
+      .select('*');
+    if (settingsData) {
+      dbSettings = settingsData;
+    }
   } catch (err) {
-    console.error('Error loading Supabase products, using mock data:', err);
+    console.error('Error loading Supabase data, using mock data:', err);
   }
 
   const displayProducts = dbProducts.length > 0 ? dbProducts : MOCK_PRODUCTS;
 
+  // Convert array of settings to key-value map
+  const settingsMap = dbSettings.reduce((acc: any, item: any) => {
+    acc[item.key] = item.value;
+    return acc;
+  }, {});
+
   return (
     <div className="space-y-16">
       {/* Client-side animations wrapper */}
-      <HomeClientWrapper products={displayProducts as any} />
+      <HomeClientWrapper products={displayProducts as any} settings={settingsMap} />
     </div>
   );
 }
