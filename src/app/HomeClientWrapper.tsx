@@ -317,7 +317,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
             className="object-cover w-full h-full opacity-35 absolute inset-0"
           >
             <source
-              src={heroConfig.video_url || 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
+              src={heroConfig.video_url || 'https://res.cloudinary.com/demo/video/upload/sea.mp4'}
               type="video/mp4"
             />
           </video>
