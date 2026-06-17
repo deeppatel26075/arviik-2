@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
 
 interface HomeClientWrapperProps {
@@ -15,6 +15,60 @@ interface HomeClientWrapperProps {
 export default function HomeClientWrapper({ products, settings }: HomeClientWrapperProps) {
   const [displayProducts, setDisplayProducts] = React.useState<any[]>(products);
   const [activeSettings, setActiveSettings] = React.useState<any>(settings || {});
+  
+  // Preloader & Countdown states
+  const [siteLoading, setSiteLoading] = React.useState(true);
+  const [preloaderStep, setPreloaderStep] = React.useState(0);
+  const [timeLeft, setTimeLeft] = React.useState({ days: '00', hours: '00', minutes: '00', seconds: '00' });
+
+  // Cinematic preloader effect
+  React.useEffect(() => {
+    const isShown = sessionStorage.getItem('arviik_preloader_run');
+    if (isShown === 'true') {
+      setSiteLoading(false);
+      return;
+    }
+
+    const timers = [
+      setTimeout(() => setPreloaderStep(1), 800),
+      setTimeout(() => setPreloaderStep(2), 1800),
+      setTimeout(() => {
+        setSiteLoading(false);
+        sessionStorage.setItem('arviik_preloader_run', 'true');
+      }, 2600)
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  // Drop countdown effect
+  React.useEffect(() => {
+    const targetDateStr = activeSettings?.general_config?.next_drop_date || '2026-06-25T18:00:00';
+    
+    const updateCountdown = () => {
+      const difference = +new Date(targetDateStr) - +new Date();
+      if (difference <= 0) {
+        setTimeLeft({ days: '00', hours: '00', minutes: '00', seconds: '00' });
+        return;
+      }
+
+      const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((difference / 1000 / 60) % 60);
+      const s = Math.floor((difference / 1000) % 60);
+
+      setTimeLeft({
+        days: d.toString().padStart(2, '0'),
+        hours: h.toString().padStart(2, '0'),
+        minutes: m.toString().padStart(2, '0'),
+        seconds: s.toString().padStart(2, '0')
+      });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [activeSettings?.general_config?.next_drop_date]);
 
   React.useEffect(() => {
     try {
@@ -180,13 +234,67 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
     }
   };
 
+  if (siteLoading) {
+    return (
+      <div className="fixed inset-0 bg-stone-950 z-50 flex items-center justify-center text-white">
+        <AnimatePresence mode="wait">
+          {preloaderStep === 0 && (
+            <motion.div
+              key="step-a"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="font-syne font-extrabold text-5xl sm:text-7xl tracking-[0.2em] uppercase"
+            >
+              A
+            </motion.div>
+          )}
+          {preloaderStep === 1 && (
+            <motion.div
+              key="step-arviik"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="font-syne font-extrabold text-4xl sm:text-6xl tracking-[0.25em] uppercase text-white"
+            >
+              ARVIIK
+            </motion.div>
+          )}
+          {preloaderStep === 2 && (
+            <motion.div
+              key="step-est"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="font-mono text-[10px] sm:text-xs tracking-[0.5em] uppercase text-stone-400"
+            >
+              EST. MMXXVI
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full transition-all duration-300" style={wrapperStyle}>
       {/* 1. HERO SECTION */}
       <section className="relative h-[90vh] w-full flex items-center justify-center bg-stone-900 overflow-hidden">
-        {/* Background Image with overlay */}
+        {/* Loop video background (with image fallback) */}
         <div className="absolute inset-0 z-0">
-          {heroConfig.image_url?.startsWith('data:') ? (
+          {heroConfig.video_url ? (
+            <video
+              src={heroConfig.video_url}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="object-cover w-full h-full opacity-35"
+            />
+          ) : heroConfig.image_url?.startsWith('data:') ? (
             <img
               src={heroConfig.image_url}
               alt="ARVIIK Streetwear Hero"
@@ -207,45 +315,58 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
         {/* Hero Content */}
         <div className="relative z-10 text-center text-white px-4 space-y-6 max-w-4xl mx-auto">
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-[10px] sm:text-xs font-bold tracking-[0.4em] uppercase text-stone-300"
-          >
-            ARVIIK CLOTHING LAB
-          </motion.p>
-          
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-syne font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-[0.05em] uppercase leading-tight"
+            className="font-syne font-extrabold text-5xl sm:text-7xl lg:text-8xl tracking-[0.2em] uppercase leading-none"
           >
-            {heroConfig.title || 'WEAR YOUR IDENTITY'}
+            {heroConfig.title === 'WEAR YOUR IDENTITY' ? 'ARVIIK' : heroConfig.title}
           </motion.h1>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-[11px] sm:text-xs font-bold tracking-[0.5em] uppercase text-stone-300"
+          >
+            {heroConfig.title === 'WEAR YOUR IDENTITY' ? 'THE ORIGIN COLLECTION' : ''}
+          </motion.p>
+
+          <div className="h-[1px] w-12 bg-white/20 mx-auto my-6" />
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="text-xs sm:text-sm tracking-widest text-stone-300 max-w-md mx-auto leading-relaxed font-sans font-medium"
+            transition={{ duration: 1, delay: 0.8 }}
+            className="text-xs sm:text-sm tracking-[0.4em] text-stone-300 max-w-lg mx-auto leading-relaxed font-sans font-light uppercase"
           >
-            {heroConfig.slogan || 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.'}
+            {heroConfig.title === 'WEAR YOUR IDENTITY' ? 'SILENCE. DISCIPLINE. IDENTITY.' : heroConfig.slogan}
           </motion.p>
+          
+          {heroConfig.title === 'WEAR YOUR IDENTITY' && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 1.0 }}
+              className="text-[10px] sm:text-xs tracking-[0.3em] text-stone-400 font-mono"
+            >
+              MMXXVI
+            </motion.p>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="pt-6"
+            transition={{ duration: 0.6, delay: 1.2 }}
+            className="pt-8"
           >
             <Link
               href="/shop"
-              className="inline-flex items-center space-x-3 bg-white text-stone-950 font-bold uppercase text-xs tracking-[0.2em] px-8 py-4 hover:bg-stone-900 hover:text-white border border-transparent hover:border-white transition-all duration-300 rounded-sm shadow-md"
+              className="inline-flex items-center space-x-2 text-white font-bold uppercase text-[11px] tracking-[0.3em] border-b border-white pb-1.5 hover:text-stone-300 hover:border-stone-300 transition-all duration-300 sound-hover sound-click"
             >
-              <span>Shop Collection</span>
-              <ArrowRight className="h-4 w-4" />
+              <span>ENTER COLLECTION</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </motion.div>
         </div>
@@ -253,6 +374,36 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
       {/* 2. NEW DROPS SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-10">
+        
+        {/* Countdown Timer Widget */}
+        <div className={`border ${bgConfig.bg_style === 'charcoal' ? 'border-stone-850 bg-stone-900/40' : 'border-stone-200 bg-stone-50/60'} p-6 sm:p-10 mb-16 text-center max-w-2xl mx-auto rounded-sm shadow-2xs`}>
+          <p className="text-[10px] text-stone-400 font-bold tracking-[0.4em] uppercase mb-2">COLLECTION 002</p>
+          <h3 className={`font-syne font-extrabold text-sm sm:text-base uppercase tracking-[0.25em] ${textModeClass} mb-6`}>
+            ACCESS OPENS IN
+          </h3>
+          <div className="flex justify-center items-center space-x-4 sm:space-x-8 font-mono text-xl sm:text-3xl font-light">
+            <div className="flex flex-col items-center">
+              <span className={`font-syne font-extrabold ${bgConfig.bg_style === 'charcoal' ? 'text-lime-400' : 'text-stone-900'}`}>[{timeLeft.days}]</span>
+              <span className="text-[9px] text-stone-400 font-bold uppercase tracking-wider mt-1.5">DAYS</span>
+            </div>
+            <span className="text-stone-300 text-lg sm:text-2xl">|</span>
+            <div className="flex flex-col items-center">
+              <span className={`font-syne font-extrabold ${bgConfig.bg_style === 'charcoal' ? 'text-lime-400' : 'text-stone-900'}`}>[{timeLeft.hours}]</span>
+              <span className="text-[9px] text-stone-400 font-bold uppercase tracking-wider mt-1.5">HOURS</span>
+            </div>
+            <span className="text-stone-300 text-lg sm:text-2xl">|</span>
+            <div className="flex flex-col items-center">
+              <span className={`font-syne font-extrabold ${bgConfig.bg_style === 'charcoal' ? 'text-lime-400' : 'text-stone-900'}`}>[{timeLeft.minutes}]</span>
+              <span className="text-[9px] text-stone-400 font-bold uppercase tracking-wider mt-1.5">MINUTES</span>
+            </div>
+            <span className="text-stone-300 text-lg sm:text-2xl">|</span>
+            <div className="flex flex-col items-center">
+              <span className={`font-syne font-extrabold ${bgConfig.bg_style === 'charcoal' ? 'text-lime-400' : 'text-stone-900'}`}>[{timeLeft.seconds}]</span>
+              <span className="text-[9px] text-stone-400 font-bold uppercase tracking-wider mt-1.5">SECONDS</span>
+            </div>
+          </div>
+        </div>
+
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -272,7 +423,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
             href="/shop"
             className={`inline-flex items-center space-x-1.5 text-xs font-bold uppercase tracking-widest ${
               bgConfig.bg_style === 'charcoal' ? 'text-white hover:text-stone-300' : 'text-stone-900 hover:opacity-75'
-            } transition-colors mt-4 sm:mt-0`}
+            } transition-colors mt-4 sm:mt-0 sound-hover sound-click`}
           >
             <span>View All</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -295,72 +446,77 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
         </motion.div>
       </section>
 
-      {/* 3. BRAND STORY SECTION (EDITORIAL LAYOUT) */}
-      <section id="story" className="bg-stone-950 text-white py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-            
-            {/* Story Text */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
-              className="lg:col-span-6 space-y-8"
-            >
-              <div className="space-y-2">
-                <span className="text-[10px] text-stone-400 font-bold tracking-[0.3em] uppercase">
-                  Our Philosophy
-                </span>
-                <h2 className="font-syne font-extrabold text-3xl sm:text-4xl uppercase tracking-wider text-white">
-                  {storyConfig.title || 'Engineered Streetwear'}
-                </h2>
-              </div>
-              <div className="text-stone-400 text-sm tracking-wide leading-relaxed font-light font-sans space-y-4 whitespace-pre-line">
-                {storyConfig.desc || 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity.'}
-              </div>
-              
-              <div className="grid grid-cols-3 gap-6 pt-4 text-center border-t border-stone-900">
-                <div className="space-y-1">
-                  <p className="font-syne font-bold text-lg text-white">240g</p>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Heavyweight</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="font-syne font-bold text-lg text-white">100%</p>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Fine Cotton</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="font-syne font-bold text-lg text-white">Boxy</p>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Street Fit</p>
-                </div>
-              </div>
-            </motion.div>
+      {/* 3. THE HOUSE OF ARVIIK (EDITORIAL TIMELINE DECK) */}
+      <section id="story" className="bg-stone-950 text-white py-24 border-t border-stone-900">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          <div className="text-center space-y-2">
+            <span className="text-[10px] text-lime-400 font-bold tracking-[0.4em] uppercase">
+              Brand Chronicle
+            </span>
+            <h2 className="font-syne font-extrabold text-3xl sm:text-5xl uppercase tracking-[0.15em] text-white">
+              THE HOUSE OF ARVIIK
+            </h2>
+            <div className="h-[1px] w-20 bg-lime-400/40 mx-auto mt-4" />
+          </div>
 
-            {/* Story Image */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
-              className="lg:col-span-6 relative aspect-4/5 w-full bg-stone-900 border border-stone-850"
-            >
-              {storyConfig.image_url?.startsWith('data:') ? (
-                <img
-                  src={storyConfig.image_url}
-                  alt="Streetwear Detail Story"
-                  className="object-cover w-full h-full opacity-90 absolute inset-0"
-                />
-              ) : (
-                <Image
-                  src={storyConfig.image_url || 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'}
-                  alt="Streetwear Detail Story"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover opacity-90"
-                />
-              )}
-            </motion.div>
+          {/* Timeline Deck */}
+          <div className="relative border-l border-stone-800 ml-4 md:ml-12 space-y-12 py-4">
+            {[
+              {
+                chapter: 'CHAPTER I',
+                title: 'THE DISCIPLINE OF SILENCE',
+                year: 'MMXXV',
+                desc: 'ARVIIK was conceived in silence. A quiet response to the noise of fast fashion, built on the foundations of architectural geometry and raw, structural discipline.'
+              },
+              {
+                chapter: 'CHAPTER II',
+                title: 'THE WEAVE OF HEAVYWEIGHTS',
+                year: 'MMXXVI',
+                desc: 'We custom-engineered our first signature 240 GSM French Terry cotton. Every thread spun, dyed, and boxy-finished to hold shape wash after wash.'
+              },
+              {
+                chapter: 'CHAPTER III',
+                title: 'THE ORIGIN RELEASE',
+                year: 'MMXXVI',
+                desc: 'Our initial drops debuted under exclusive invitation-only code locks. Reasserting that digital luxury is not about mass reach, but curated belonging.'
+              },
+              {
+                chapter: 'CHAPTER IV',
+                title: 'THE ATELIER VISION',
+                year: 'MMXXVII & BEYOND',
+                desc: 'Merging physical craftsmanship with the digital vault. Introducing Web Audio soundscapes, AI styling simulators, and cryptographic Authenticity Passports.'
+              }
+            ].map((step, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.6, delay: idx * 0.15 }}
+                className="relative pl-8 sm:pl-12 group"
+              >
+                {/* Bullet */}
+                <div className="absolute -left-[7px] top-1.5 h-3.5 w-3.5 rounded-full bg-stone-950 border border-lime-400 group-hover:bg-lime-400 transition-colors duration-300" />
 
+                {/* Content Card */}
+                <div className="bg-stone-900/40 border border-stone-900/60 p-6 sm:p-8 rounded-xs hover:border-stone-800 transition-colors duration-300 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <span className="text-[9px] text-lime-400 font-bold tracking-[0.25em] font-mono">
+                      {step.chapter}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-mono tracking-widest bg-stone-950 px-2 py-0.5 rounded-sm">
+                      {step.year}
+                    </span>
+                  </div>
+                  <h3 className="font-syne font-bold text-md sm:text-lg uppercase tracking-wider text-white">
+                    {step.title}
+                  </h3>
+                  <p className="text-stone-400 text-xs sm:text-sm leading-relaxed font-sans font-light">
+                    {step.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>

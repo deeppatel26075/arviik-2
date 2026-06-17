@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { ShoppingBag, Heart, User, Menu, X, Search } from 'lucide-react';
+import { ShoppingBag, Heart, User, Menu, X, Search, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SoundPlayer } from '@/components/SoundExperience';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -17,6 +18,13 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSoundEnabled(localStorage.getItem('arviik_sound_enabled') !== 'false');
+    }
+  }, []);
 
   // Detect scroll to add shadow/border
   useEffect(() => {
@@ -79,15 +87,18 @@ export default function Navbar() {
             </div>
 
             {/* Left Nav (Desktop) */}
-            <nav className="hidden lg:flex space-x-8 text-xs font-semibold tracking-widest uppercase">
-              <Link href="/shop" className="text-stone-900 hover:text-stone-500 transition-colors">
-                Shop
+            <nav className="hidden lg:flex space-x-8 text-xs font-semibold tracking-widest uppercase select-none">
+              <Link href="/shop" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
+                DROPS
               </Link>
-              <Link href="/shop?filter=featured" className="text-stone-900 hover:text-stone-500 transition-colors">
-                Featured
+              <Link href="/lookbook" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
+                LOOKBOOK
               </Link>
-              <Link href="/#story" className="text-stone-900 hover:text-stone-500 transition-colors">
-                Our Story
+              <Link href="/journal" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
+                JOURNAL
+              </Link>
+              <Link href="/#story" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
+                THE HOUSE
               </Link>
             </nav>
 
@@ -95,7 +106,7 @@ export default function Navbar() {
             <div className="flex-shrink-0">
               <Link
                 href="/"
-                className="font-syne font-extrabold text-2xl sm:text-3xl tracking-[0.25em] text-stone-900 transition-opacity hover:opacity-85"
+                className="font-syne font-extrabold text-2xl sm:text-3xl tracking-[0.25em] text-stone-900 transition-opacity hover:opacity-85 sound-click sound-hover"
               >
                 ARVIIK
               </Link>
@@ -103,20 +114,34 @@ export default function Navbar() {
 
             {/* Right Icons */}
             <div className="flex items-center space-x-4 sm:space-x-6">
+              {/* Sound Toggle switch */}
+              <button
+                onClick={() => {
+                  const current = localStorage.getItem('arviik_sound_enabled') !== 'false';
+                  localStorage.setItem('arviik_sound_enabled', (!current).toString());
+                  setSoundEnabled(!current);
+                  SoundPlayer.playTick();
+                }}
+                className="text-stone-900 hover:opacity-70 transition-opacity flex items-center sound-click"
+                title="Toggle Sound Experience"
+              >
+                {soundEnabled ? <Volume2 className="h-5 w-5 text-lime-600" /> : <VolumeX className="h-5 w-5 text-stone-400" />}
+              </button>
+
               <button
                 onClick={() => setSearchOpen(true)}
-                className="text-stone-900 hover:opacity-70 transition-opacity"
+                className="text-stone-900 hover:opacity-70 transition-opacity sound-click"
               >
                 <Search className="h-5 w-5" />
               </button>
 
               <Link
                 href="/profile"
-                className="text-stone-900 hover:opacity-70 transition-opacity relative"
+                className="text-stone-900 hover:opacity-70 transition-opacity relative sound-click"
               >
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 bg-stone-950 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                     {wishlistCount}
                   </span>
                 )}
@@ -124,14 +149,14 @@ export default function Navbar() {
 
               <Link
                 href={user ? '/profile' : '/login'}
-                className="text-stone-900 hover:opacity-70 transition-opacity"
+                className="text-stone-900 hover:opacity-70 transition-opacity sound-click"
               >
                 <User className="h-5 w-5" />
               </Link>
 
               <button
                 onClick={triggerCartOpen}
-                className="text-stone-900 hover:opacity-70 transition-opacity relative"
+                className="text-stone-900 hover:opacity-70 transition-opacity relative sound-click"
               >
                 <ShoppingBag className="h-5 w-5" />
                 {totalCartItems > 0 && (
@@ -156,21 +181,24 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-28 left-0 w-full bg-stone-50 border-b border-stone-200 z-30 lg:hidden shadow-lg"
+            className="fixed top-28 left-0 w-full bg-stone-50 border-b border-stone-200 z-30 lg:hidden shadow-lg font-sans"
           >
             <div className="px-6 py-8 flex flex-col space-y-6 text-sm font-semibold tracking-widest uppercase text-stone-950">
-              <Link href="/shop" onClick={() => setIsOpen(false)} className="hover:text-stone-500">
-                Shop T-Shirts
+              <Link href="/shop" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
+                DROPS
               </Link>
-              <Link href="/shop?filter=featured" onClick={() => setIsOpen(false)} className="hover:text-stone-500">
-                Featured Drops
+              <Link href="/lookbook" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
+                LOOKBOOK
               </Link>
-              <Link href="/#story" onClick={() => setIsOpen(false)} className="hover:text-stone-500">
-                Our Story
+              <Link href="/journal" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
+                JOURNAL
+              </Link>
+              <Link href="/#story" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
+                THE HOUSE
               </Link>
               {profile?.role === 'admin' && (
-                <Link href="/admin" onClick={() => setIsOpen(false)} className="text-accent hover:opacity-80">
-                  Admin Panel
+                <Link href="/admin" onClick={() => setIsOpen(false)} className="text-accent hover:opacity-80 sound-click">
+                  ADMIN COMMAND CENTER
                 </Link>
               )}
             </div>

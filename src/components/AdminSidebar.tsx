@@ -13,12 +13,12 @@ export default function AdminSidebar() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-    { name: 'Products', path: '/admin/products', icon: ClipboardList },
+    { name: 'Pieces', path: '/admin/products', icon: ClipboardList },
     { name: 'Categories', path: '/admin/categories', icon: Layers },
-    { name: 'Orders', path: '/admin/orders', icon: ShoppingBag },
+    { name: 'Archive', path: '/admin/orders', icon: ShoppingBag },
     { name: 'Coupons', path: '/admin/coupons', icon: Tags },
     { name: 'Customers', path: '/admin/customers', icon: Users },
-    { name: 'Website config', path: '/admin/settings', icon: Settings },
+    { name: 'House Settings', path: '/admin/settings', icon: Settings },
   ];
 
   return (

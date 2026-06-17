@@ -7,6 +7,8 @@ import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
+import SoundExperience from '@/components/SoundExperience';
+import Atelier from '@/components/Atelier';
 
 const inter = Inter({
   variable: '--font-sans',
@@ -44,6 +46,8 @@ export default function RootLayout({
           <CartProvider>
             <Navbar />
             <CartDrawer />
+            <SoundExperience />
+            <Atelier />
             <main className="flex-grow flex flex-col">{children}</main>
             <Footer />
           </CartProvider>

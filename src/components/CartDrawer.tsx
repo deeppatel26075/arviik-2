@@ -87,7 +87,7 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-stone-200 bg-white">
               <div className="flex items-center space-x-2">
                 <span className="font-syne font-bold uppercase tracking-wider text-stone-900 text-sm">
-                  Shopping Bag
+                  YOUR BAG
                 </span>
                 <span className="bg-stone-100 text-stone-800 text-xs font-semibold px-2 py-0.5 rounded-full">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
@@ -95,7 +95,7 @@ export default function CartDrawer() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-stone-500 hover:text-stone-900 transition-colors"
+                className="text-stone-500 hover:text-stone-900 transition-colors sound-click"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -111,9 +111,9 @@ export default function CartDrawer() {
                   <Link
                     href="/shop"
                     onClick={() => setIsOpen(false)}
-                    className="text-xs bg-stone-900 text-white font-bold uppercase tracking-widest px-6 py-3 hover:opacity-85 transition-opacity"
+                    className="text-xs bg-stone-900 text-white font-bold uppercase tracking-widest px-6 py-3 hover:opacity-85 transition-opacity sound-hover sound-click"
                   >
-                    Shop Collection
+                    SHOP DROPS
                   </Link>
                 </div>
               ) : (
@@ -144,7 +144,7 @@ export default function CartDrawer() {
                           <Link
                             href={`/shop/${item.slug}`}
                             onClick={() => setIsOpen(false)}
-                            className="font-semibold text-xs tracking-wider uppercase text-stone-900 hover:text-stone-500 line-clamp-1"
+                            className="font-semibold text-xs tracking-wider uppercase text-stone-900 hover:text-stone-500 line-clamp-1 sound-hover sound-click"
                           >
                             {item.name}
                           </Link>
@@ -161,14 +161,14 @@ export default function CartDrawer() {
                           <div className="flex items-center border border-stone-200 rounded-sm">
                             <button
                               onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                              className="px-2 py-1 text-stone-600 hover:text-stone-900"
+                              className="px-2 py-1 text-stone-600 hover:text-stone-900 sound-click"
                             >
                               <Minus className="h-3 w-3" />
                             </button>
                             <span className="text-xs font-semibold px-2">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                              className="px-2 py-1 text-stone-600 hover:text-stone-900"
+                              className="px-2 py-1 text-stone-600 hover:text-stone-900 sound-click"
                             >
                               <Plus className="h-3 w-3" />
                             </button>
@@ -176,7 +176,7 @@ export default function CartDrawer() {
                           
                           <button
                             onClick={() => removeFromCart(item.productId, item.size)}
-                            className="text-stone-400 hover:text-red-700 transition-colors"
+                            className="text-stone-400 hover:text-red-700 transition-colors sound-click"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -201,7 +201,7 @@ export default function CartDrawer() {
                       </div>
                       <button
                         onClick={handleRemoveCoupon}
-                        className="text-[10px] text-red-700 font-bold uppercase tracking-wider hover:opacity-85"
+                        className="text-[10px] text-red-700 font-bold uppercase tracking-wider hover:opacity-85 sound-click"
                       >
                         Remove
                       </button>
@@ -218,7 +218,7 @@ export default function CartDrawer() {
                       <button
                         type="submit"
                         disabled={loadingCoupon}
-                        className="bg-stone-900 text-white text-[10px] font-bold uppercase px-4 hover:opacity-90 rounded-r-sm"
+                        className="bg-stone-900 text-white text-[10px] font-bold uppercase px-4 hover:opacity-90 rounded-r-sm sound-click"
                       >
                         Apply
                       </button>
@@ -267,9 +267,9 @@ export default function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={() => setIsOpen(false)}
-                  className="block w-full bg-stone-950 text-white text-xs font-bold text-center uppercase tracking-widest py-4 hover:opacity-90 transition-opacity rounded-xs shadow-sm"
+                  className="block w-full bg-stone-950 text-white text-xs font-bold text-center uppercase tracking-widest py-4 hover:opacity-90 transition-opacity rounded-xs shadow-sm sound-hover sound-click"
                 >
-                  Proceed to Checkout
+                  PROCEED TO ACQUISITION
                 </Link>
               </div>
             )}

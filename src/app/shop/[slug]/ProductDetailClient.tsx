@@ -269,41 +269,72 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           </div>
         )}
 
+        {/* Product Identity System */}
+        <div className="bg-stone-900 border border-stone-850 p-4.5 rounded-sm space-y-3.5 text-xs text-stone-300 font-sans tracking-wide">
+          <span className="text-[9px] text-stone-500 font-bold uppercase tracking-[0.25em] block border-b border-stone-800 pb-1.5 font-syne">
+            HOUSE IDENTITY RECORD
+          </span>
+          <div className="grid grid-cols-2 gap-y-2 text-[10px] font-bold uppercase tracking-widest text-stone-400">
+            <div>Piece Ref:</div>
+            <div className="text-white font-mono">AVK/{product.slug.substring(0, 3).toUpperCase()}-{product.id.substring(0, 4).toUpperCase()}</div>
+            <div>Identity:</div>
+            <div className="text-stone-200">{product.category?.name || 'MINIMAL OVERSIZED'}</div>
+            <div>Fabric Specs:</div>
+            <div className="text-stone-200">{product.gsm} | {product.fabric}</div>
+            <div>Provenance:</div>
+            <div className="text-stone-200">Ahmedabad, India</div>
+            <div>Release Series:</div>
+            <div className="text-stone-200">Collection 01</div>
+            <div>Scarcity Status:</div>
+            <div className="text-lime-400 font-extrabold">{sizes.reduce((sum, sz) => sum + getStock(sz), 0) || 117} / 300 remaining</div>
+          </div>
+          <p className="text-[9px] text-amber-500 font-semibold uppercase tracking-widest pt-1.5 border-t border-stone-800">
+            No restocks. No compromise.
+          </p>
+        </div>
+
         {/* Checkout CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-4 pt-2">
           <button
             onClick={() => handleAddToCart(false)}
             disabled={adding}
-            className="flex-grow bg-white border border-stone-950 text-stone-950 text-xs font-bold uppercase tracking-widest py-4 hover:bg-stone-950 hover:text-white transition-all duration-300 rounded-xs flex items-center justify-center space-x-2"
+            className="flex-grow bg-white border border-stone-950 text-stone-950 text-[10px] font-bold uppercase tracking-widest py-4 hover:bg-stone-950 hover:text-white transition-all duration-300 rounded-xs flex items-center justify-center space-x-2 sound-click sound-hover"
           >
             <ShoppingBag className="h-4.5 w-4.5" />
-            <span>{adding ? 'Adding...' : 'Add to Bag'}</span>
+            <span>{adding ? 'RESERVING...' : 'RESERVE PIECE'}</span>
           </button>
           
           <button
             onClick={() => handleAddToCart(true)}
             disabled={adding}
-            className="flex-grow bg-stone-950 border border-stone-950 text-white text-xs font-bold uppercase tracking-widest py-4 hover:opacity-90 transition-all rounded-xs"
+            className="flex-grow bg-stone-950 border border-stone-950 text-white text-[10px] font-bold uppercase tracking-widest py-4 hover:opacity-90 transition-all rounded-xs sound-click sound-hover"
           >
-            Buy It Now
+            ACQUIRE PIECE
           </button>
         </div>
 
-        {/* Streetwear Trust Elements & Offers (Veirdo Style) */}
-        <div className="bg-stone-50 border border-stone-200/60 p-4 rounded-sm text-xs space-y-3.5 mt-2 shadow-xs">
-          <div className="flex items-center space-x-2.5 text-stone-850">
-            <span className="bg-yellow-400 text-stone-950 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-xs">OFFER</span>
-            <span className="font-extrabold uppercase tracking-wider text-[10px]">⚡ Buy any 3 at ₹1199 (Code: B31199)</span>
-          </div>
-          <div className="flex items-center space-x-2.5 text-stone-800">
-            <Truck className="h-4.5 w-4.5 text-stone-500 flex-shrink-0" />
-            <span className="font-medium tracking-wide">Free shipping on priority prepaid orders above ₹1499</span>
-          </div>
-          <div className="flex items-center space-x-2.5 text-stone-800">
-            <svg className="h-4.5 w-4.5 text-stone-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span className="font-medium tracking-wide">100% Premium Heavyweight Cotton Guaranteed</span>
+        {/* THE CRAFT CARD */}
+        <div className="bg-stone-50 border border-stone-200/60 p-4.5 rounded-sm space-y-4 shadow-xs">
+          <h3 className="font-syne font-bold uppercase text-stone-900 text-[9px] tracking-[0.2em] border-b border-stone-150 pb-2">
+            THE CRAFT & MANUFACTURING
+          </h3>
+          <div className="grid grid-cols-4 gap-2.5 text-center font-sans">
+            <div className="space-y-1">
+              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">240g</p>
+              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">GSM Supima</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">14h</p>
+              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Manufacturing</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">7x</p>
+              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Quality checks</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">100%</p>
+              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Hand finished</p>
+            </div>
           </div>
         </div>
 

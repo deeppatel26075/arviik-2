@@ -8,6 +8,7 @@ export default function AdminSettings() {
   const [heroTitle, setHeroTitle] = useState('WEAR YOUR IDENTITY');
   const [heroSlogan, setHeroSlogan] = useState('Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.');
   const [heroImageUrl, setHeroImageUrl] = useState('https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600');
+  const [heroVideoUrl, setHeroVideoUrl] = useState('');
   const [brandStoryTitle, setBrandStoryTitle] = useState('Engineered Streetwear');
   const [brandStoryDesc, setBrandStoryDesc] = useState('At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity.');
   const [brandStoryImageUrl, setBrandStoryImageUrl] = useState('https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800');
@@ -16,6 +17,7 @@ export default function AdminSettings() {
   const [bgStyle, setBgStyle] = useState('default'); // 'default' | 'white' | 'charcoal' | 'sepia' | 'custom-color' | 'custom-image'
   const [customBgColor, setCustomBgColor] = useState('#fafaf9');
   const [bgImageUrl, setBgImageUrl] = useState('');
+  const [nextDropDate, setNextDropDate] = useState('2026-06-25T18:00');
 
   // Instagram Lookbook Gallery Images
   const [gallery1, setGallery1] = useState('https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600');
@@ -59,6 +61,7 @@ export default function AdminSettings() {
             setHeroTitle(parsed.hero_config.title || '');
             setHeroSlogan(parsed.hero_config.slogan || '');
             setHeroImageUrl(parsed.hero_config.image_url || '');
+            setHeroVideoUrl(parsed.hero_config.video_url || '');
           }
           if (parsed.story_config) {
             setBrandStoryTitle(parsed.story_config.title || '');
@@ -69,6 +72,7 @@ export default function AdminSettings() {
             setBgStyle(parsed.general_config.bg_style || 'default');
             setCustomBgColor(parsed.general_config.custom_bg_color || '#fafaf9');
             setBgImageUrl(parsed.general_config.bg_image_url || '');
+            setNextDropDate(parsed.general_config.next_drop_date || '2026-06-25T18:00');
           }
           if (parsed.gallery_config) {
             setGallery1(parsed.gallery_config.img1 || '');
@@ -97,6 +101,7 @@ export default function AdminSettings() {
             setHeroTitle(heroConfig.title || '');
             setHeroSlogan(heroConfig.slogan || '');
             setHeroImageUrl(heroConfig.image_url || '');
+            setHeroVideoUrl(heroConfig.video_url || '');
             merged.hero_config = heroConfig;
           }
           if (storyConfig) {
@@ -109,6 +114,7 @@ export default function AdminSettings() {
             setBgStyle(generalConfig.bg_style || 'default');
             setCustomBgColor(generalConfig.custom_bg_color || '#fafaf9');
             setBgImageUrl(generalConfig.bg_image_url || '');
+            setNextDropDate(generalConfig.next_drop_date || '2026-06-25T18:00');
             merged.general_config = generalConfig;
           }
           if (galleryConfig) {
@@ -147,6 +153,7 @@ export default function AdminSettings() {
         title: heroTitle,
         slogan: heroSlogan,
         image_url: heroImageUrl,
+        video_url: heroVideoUrl,
       },
       story_config: {
         title: brandStoryTitle,
@@ -157,6 +164,7 @@ export default function AdminSettings() {
         bg_style: bgStyle,
         custom_bg_color: customBgColor,
         bg_image_url: bgImageUrl,
+        next_drop_date: nextDropDate,
       },
       gallery_config: {
         img1: gallery1,
@@ -390,6 +398,17 @@ export default function AdminSettings() {
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Hero Loop Video URL (Optional)</label>
+                <input
+                  type="text"
+                  value={heroVideoUrl}
+                  onChange={(e) => setHeroVideoUrl(e.target.value)}
+                  placeholder="e.g. https://www.w3schools.com/html/mov_bbb.mp4"
+                  className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
+                />
+              </div>
+
               {/* Hero Image Uploader & Preview */}
               <div className="space-y-2 p-3 bg-stone-50 rounded-sm border border-stone-200/60">
                 <label className="text-[10px] text-stone-600 font-bold uppercase tracking-wider block">Hero Banner Background Image</label>
@@ -494,8 +513,22 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {/* Section: Drop Schedule */}
+            <div className="space-y-4 pt-4 border-t border-stone-100">
+              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block border-b pb-1.5 font-syne">Drop Schedule Settings</span>
+              <div className="space-y-1">
+                <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Next Release Access Date / Time</label>
+                <input
+                  type="datetime-local"
+                  value={nextDropDate}
+                  onChange={(e) => setNextDropDate(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
+                />
+              </div>
+            </div>
+
             {/* Section: Website Styling */}
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4 pt-4 border-t border-stone-100">
               <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block border-b pb-1.5 font-syne">Overall Website Background Styling</span>
               
               <div className="grid grid-cols-2 gap-4">
