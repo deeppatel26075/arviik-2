@@ -20,6 +20,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
   const [siteLoading, setSiteLoading] = React.useState(true);
   const [preloaderStep, setPreloaderStep] = React.useState(0);
   const [timeLeft, setTimeLeft] = React.useState({ days: '00', hours: '00', minutes: '00', seconds: '00' });
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Cinematic preloader effect (runs on every mount for demo visibility)
   React.useEffect(() => {
@@ -33,6 +34,16 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // Guarantee video autoplay works in React
+  React.useEffect(() => {
+    if (!siteLoading && videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(err => {
+        console.warn('Autoplay gesture blocked by browser:', err);
+      });
+    }
+  }, [siteLoading]);
 
   // Drop countdown effect
   React.useEffect(() => {
@@ -298,6 +309,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
           {/* Absolute Video Overlay Layer */}
           <video
+            ref={videoRef}
             autoPlay
             loop
             muted
