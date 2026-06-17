@@ -21,20 +21,13 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
   const [preloaderStep, setPreloaderStep] = React.useState(0);
   const [timeLeft, setTimeLeft] = React.useState({ days: '00', hours: '00', minutes: '00', seconds: '00' });
 
-  // Cinematic preloader effect
+  // Cinematic preloader effect (runs on every mount for demo visibility)
   React.useEffect(() => {
-    const isShown = sessionStorage.getItem('arviik_preloader_run');
-    if (isShown === 'true') {
-      setSiteLoading(false);
-      return;
-    }
-
     const timers = [
       setTimeout(() => setPreloaderStep(1), 800),
       setTimeout(() => setPreloaderStep(2), 1800),
       setTimeout(() => {
         setSiteLoading(false);
-        sessionStorage.setItem('arviik_preloader_run', 'true');
       }, 2600)
     ];
 
@@ -285,9 +278,9 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
       <section className="relative h-[90vh] w-full flex items-center justify-center bg-stone-900 overflow-hidden">
         {/* Loop video background (with image fallback) */}
         <div className="absolute inset-0 z-0">
-          {heroConfig.video_url ? (
+          {(heroConfig.video_url || 'https://assets.mixkit.co/videos/preview/mixkit-waving-black-glossy-fabric-42296-large.mp4') ? (
             <video
-              src={heroConfig.video_url}
+              src={heroConfig.video_url || 'https://assets.mixkit.co/videos/preview/mixkit-waving-black-glossy-fabric-42296-large.mp4'}
               autoPlay
               loop
               muted
