@@ -24,6 +24,10 @@ export default function AdminSettings() {
   const [razorpayKeyId, setRazorpayKeyId] = useState('');
   const [razorpayKeySecret, setRazorpayKeySecret] = useState('');
 
+  // Shipping configuration
+  const [shippingFee, setShippingFee] = useState(100);
+  const [shippingThreshold, setShippingThreshold] = useState(1500);
+
   // Instagram Lookbook Gallery Images
   const [gallery1, setGallery1] = useState('https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600');
   const [gallery2, setGallery2] = useState('https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600');
@@ -96,6 +100,8 @@ export default function AdminSettings() {
             setCustomBgColor(parsed.general_config.custom_bg_color || '#fafaf9');
             setBgImageUrl(parsed.general_config.bg_image_url || '');
             setNextDropDate(parsed.general_config.next_drop_date || '2026-06-25T18:00');
+            setShippingFee(parsed.general_config.shipping_fee !== undefined ? Number(parsed.general_config.shipping_fee) : 100);
+            setShippingThreshold(parsed.general_config.shipping_threshold !== undefined ? Number(parsed.general_config.shipping_threshold) : 1500);
           }
           if (parsed.payment_config) {
             setPaymentMode(parsed.payment_config.payment_mode || 'simulation');
@@ -144,6 +150,8 @@ export default function AdminSettings() {
             setCustomBgColor(generalConfig.custom_bg_color || '#fafaf9');
             setBgImageUrl(generalConfig.bg_image_url || '');
             setNextDropDate(generalConfig.next_drop_date || '2026-06-25T18:00');
+            setShippingFee(generalConfig.shipping_fee !== undefined ? Number(generalConfig.shipping_fee) : 100);
+            setShippingThreshold(generalConfig.shipping_threshold !== undefined ? Number(generalConfig.shipping_threshold) : 1500);
             merged.general_config = generalConfig;
           }
           if (paymentConfig) {
@@ -200,6 +208,8 @@ export default function AdminSettings() {
         custom_bg_color: customBgColor,
         bg_image_url: bgImageUrl,
         next_drop_date: nextDropDate,
+        shipping_fee: Number(shippingFee),
+        shipping_threshold: Number(shippingThreshold),
       },
       payment_config: {
         payment_mode: paymentMode,
@@ -592,6 +602,35 @@ export default function AdminSettings() {
                   onChange={(e) => setNextDropDate(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
                 />
+              </div>
+            </div>
+
+            {/* Section: Shipping & Logistics */}
+            <div className="space-y-4 pt-4 border-t border-stone-100">
+              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block border-b pb-1.5 font-syne">Shipping & Logistics Configurations</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Flat Shipping Fee (INR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={shippingFee}
+                    onChange={(e) => setShippingFee(Number(e.target.value))}
+                    placeholder="100"
+                    className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Free Shipping Threshold (INR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={shippingThreshold}
+                    onChange={(e) => setShippingThreshold(Number(e.target.value))}
+                    placeholder="1500"
+                    className="w-full bg-stone-50 border border-stone-200 px-3 py-2 text-xs focus:outline-none focus:border-stone-900 rounded-sm font-sans"
+                  />
+                </div>
               </div>
             </div>
 

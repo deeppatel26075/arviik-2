@@ -58,6 +58,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const [shippingConfig, setShippingConfig] = useState({
+    shipping_fee: 100,
+    shipping_threshold: 1500
+  });
+
+  // Load shipping configurations from database
+  useEffect(() => {
+    const loadShippingConfig = async () => {
+      try {
+        // Try local storage cache first
+        const local = localStorage.getItem('arviik_custom_settings');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed.general_config) {
+            setShippingConfig({
+              shipping_fee: parsed.general_config.shipping_fee !== undefined ? Number(parsed.general_config.shipping_fee) : 100,
+              shipping_threshold: parsed.general_config.shipping_threshold !== undefined ? Number(parsed.general_config.shipping_threshold) : 1500,
+            });
+          }
+        }
+
+        // Fetch from Supabase
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .eq('key', 'general_config')
+          .single();
+
+        if (data && data.value) {
+          setShippingConfig({
+            shipping_fee: data.value.shipping_fee !== undefined ? Number(data.value.shipping_fee) : 100,
+            shipping_threshold: data.value.shipping_threshold !== undefined ? Number(data.value.shipping_threshold) : 1500,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to load shipping configs:', err);
+      }
+    };
+
+    loadShippingConfig();
+  }, []);
+
   // Load from localStorage
   useEffect(() => {
     try {
@@ -221,8 +263,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getShippingFee = () => {
     const subtotal = getCartSubtotal();
     if (subtotal === 0) return 0;
-    // Free shipping above ₹1500, otherwise flat ₹100
-    return subtotal >= 1500 ? 0 : 100;
+    return subtotal >= shippingConfig.shipping_threshold ? 0 : shippingConfig.shipping_fee;
   };
 
   const getCartTotal = () => {

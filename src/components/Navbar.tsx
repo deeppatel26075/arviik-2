@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ShoppingBag, Heart, User, Menu, X, Search, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SoundPlayer } from '@/components/SoundExperience';
+import { supabase } from '@/lib/supabase';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -39,6 +40,32 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const [shippingThreshold, setShippingThreshold] = useState(1500);
+
+  // Load dynamic shipping config threshold
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const local = localStorage.getItem('arviik_custom_settings');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed.general_config?.shipping_threshold !== undefined) {
+            setShippingThreshold(Number(parsed.general_config.shipping_threshold));
+          }
+        }
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .eq('key', 'general_config')
+          .single();
+        if (data && data.value?.shipping_threshold !== undefined) {
+          setShippingThreshold(Number(data.value.shipping_threshold));
+        }
+      } catch (e) {}
+    };
+    loadConfig();
+  }, []);
+
   // Skip rendering Navbar on Admin Panel routes
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -65,10 +92,10 @@ export default function Navbar() {
         {/* Promotional Scrolling Marquee Banner */}
         <div className="bg-stone-950 text-lime-400 py-2 overflow-hidden border-b border-stone-900/10 text-[9px] font-bold uppercase tracking-[0.2em] select-none">
           <div className="whitespace-nowrap flex animate-marquee">
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹1499 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹1499 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹1499 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹1499 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
           </div>
         </div>
 
