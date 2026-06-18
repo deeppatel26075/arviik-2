@@ -70,11 +70,8 @@ export default function LoginPage() {
         if (error) throw error;
 
         // Fetch user role directly to route immediately
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user?.id)
-          .single();
+        const resProfile = await fetch(`/api/profile?id=${data.user?.id}`);
+        const prof = resProfile.ok ? await resProfile.json() : null;
 
         if (prof?.role === 'admin') {
           router.push('/admin');

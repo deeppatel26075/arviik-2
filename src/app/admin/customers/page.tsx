@@ -14,12 +14,13 @@ export default function AdminCustomers() {
       setLoading(true);
       
       // Fetch user profile stats
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'customer');
-
-      if (error) console.error(error);
+      const res = await fetch('/api/profile?list=true');
+      if (!res.ok) {
+        throw new Error('Failed to fetch customers list');
+      }
+      const data = await res.json();
+      const profiles = data ? data.filter((p: any) => p.role === 'customer') : [];
+      let error = null;
 
       if (profiles && profiles.length > 0) {
         const list = [];

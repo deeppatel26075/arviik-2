@@ -24,17 +24,23 @@ export default function AdminDashboard() {
         // 1. Fetch metrics from Supabase
         const { data: orders } = await supabase
           .from('orders')
-          .select('*, profiles(full_name)');
+          .select('*');
         
         const { data: inventory } = await supabase
           .from('inventory')
           .select('*')
           .lt('quantity', 5);
 
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'customer');
+        let profilesLength = 180;
+        try {
+          const resProfiles = await fetch('/api/profile?list=true');
+          if (resProfiles.ok) {
+            const dataProfiles = await resProfiles.json();
+            profilesLength = dataProfiles ? dataProfiles.filter((p: any) => p.role === 'customer').length : 0;
+          }
+        } catch (e) {
+          console.warn('Failed to load profile counts:', e);
+        }
 
         if (orders && orders.length > 0) {
           // Calculate revenue
@@ -55,7 +61,7 @@ export default function AdminDashboard() {
             monthlyRevenue: totalPaid || 242000,
             totalOrders: orders.length,
             pendingOrders: pending,
-            totalCustomers: profiles?.length || 180,
+            totalCustomers: profilesLength,
             lowStockCount: inventory?.length || 2,
           });
 

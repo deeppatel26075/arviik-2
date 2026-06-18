@@ -134,9 +134,11 @@ export default function ProfilePage() {
     SoundPlayer.playTick();
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id,
           full_name: fullName,
           phone,
           shipping_address: address,
@@ -144,9 +146,11 @@ export default function ProfilePage() {
           shipping_state: state,
           shipping_pincode: pincode,
         })
-        .eq('id', user.id);
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        throw new Error('Failed to save profile via API');
+      }
       
       setSaveSuccess(true);
       await refreshProfile();

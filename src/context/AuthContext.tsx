@@ -34,18 +34,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setProfile(null);
-      } else {
-        setProfile(data as UserProfile);
+      const res = await fetch(`/api/profile?id=${userId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch profile from API');
       }
+      const data = await res.json();
+      setProfile(data as UserProfile);
     } catch (err) {
       console.error('Profile fetch failed:', err);
       setProfile(null);
