@@ -66,16 +66,14 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
   // Sync settings with localStorage fallback
   useEffect(() => {
     try {
-      const storedSettings = localStorage.getItem('arviik_custom_settings');
-      if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        setActiveSettings({
-          ...parsed,
-          ...settings
-        });
-      } else if (settings && Object.keys(settings).length > 0) {
-        localStorage.setItem('arviik_custom_settings', JSON.stringify(settings));
+      if (settings && Object.keys(settings).length > 0) {
         setActiveSettings(settings);
+        localStorage.setItem('arviik_custom_settings', JSON.stringify(settings));
+      } else {
+        const storedSettings = localStorage.getItem('arviik_custom_settings');
+        if (storedSettings) {
+          setActiveSettings(JSON.parse(storedSettings));
+        }
       }
     } catch (e) {
       console.error('Failed to load settings in shop client:', e);
@@ -85,11 +83,14 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
   // Sync categories with localStorage fallback
   useEffect(() => {
     try {
-      const storedCats = localStorage.getItem('arviik_custom_categories');
-      if (storedCats) {
-        setLocalCategories(JSON.parse(storedCats));
-      } else {
+      if (categories && categories.length > 0) {
         setLocalCategories(categories);
+        localStorage.setItem('arviik_custom_categories', JSON.stringify(categories));
+      } else {
+        const storedCats = localStorage.getItem('arviik_custom_categories');
+        if (storedCats) {
+          setLocalCategories(JSON.parse(storedCats));
+        }
       }
     } catch (e) {
       console.error('Failed to load local categories:', e);
@@ -161,15 +162,20 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
   // Sync products with localStorage cache
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('arviik_custom_products');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
-        if (hasOldMocks) {
-          localStorage.setItem('arviik_custom_products', JSON.stringify(initialProducts));
-          setLocalProducts(initialProducts);
-        } else if (parsed && parsed.length > 0) {
-          setLocalProducts(parsed.filter((p: any) => !p.is_hidden));
+      if (initialProducts && initialProducts.length > 0) {
+        setLocalProducts(initialProducts);
+        localStorage.setItem('arviik_custom_products', JSON.stringify(initialProducts));
+      } else {
+        const stored = localStorage.getItem('arviik_custom_products');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
+          if (hasOldMocks) {
+            localStorage.setItem('arviik_custom_products', JSON.stringify(initialProducts));
+            setLocalProducts(initialProducts);
+          } else if (parsed && parsed.length > 0) {
+            setLocalProducts(parsed.filter((p: any) => !p.is_hidden));
+          }
         }
       }
     } catch (e) {

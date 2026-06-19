@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/adminApi';
 import { Save, Check, RefreshCw, Database, X, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminSettings() {
@@ -227,12 +228,12 @@ export default function AdminSettings() {
     };
 
     try {
-      // Upsert to Supabase site_settings table
-      await supabase.from('site_settings').upsert({ key: 'hero_config', value: localSettings.hero_config });
-      await supabase.from('site_settings').upsert({ key: 'story_config', value: localSettings.story_config });
-      await supabase.from('site_settings').upsert({ key: 'general_config', value: localSettings.general_config });
-      await supabase.from('site_settings').upsert({ key: 'payment_config', value: localSettings.payment_config });
-      await supabase.from('site_settings').upsert({ key: 'gallery_config', value: localSettings.gallery_config });
+      // Upsert to Supabase site_settings table via admin API
+      await adminDbQuery('site_settings', 'upsert', { key: 'hero_config', value: localSettings.hero_config });
+      await adminDbQuery('site_settings', 'upsert', { key: 'story_config', value: localSettings.story_config });
+      await adminDbQuery('site_settings', 'upsert', { key: 'general_config', value: localSettings.general_config });
+      await adminDbQuery('site_settings', 'upsert', { key: 'payment_config', value: localSettings.payment_config });
+      await adminDbQuery('site_settings', 'upsert', { key: 'gallery_config', value: localSettings.gallery_config });
 
       // Update localStorage cache
       localStorage.setItem('arviik_custom_settings', JSON.stringify(localSettings));
@@ -344,34 +345,31 @@ export default function AdminSettings() {
     }
 
     try {
-      await supabase.from('products').delete().like('id', 'prod-seeded-%');
+      await adminDbQuery('products', 'delete', null, { description: 'Premium drop shoulder oversized streetwear tee from the ARVIIK Lab.' });
 
       for (const item of generatedProducts) {
-        const { data: dbProd } = await supabase
-          .from('products')
-          .insert({
-            name: item.name,
-            slug: item.slug,
-            description: item.description,
-            price: item.price,
-            discount_price: item.discount_price,
-            category_id: item.category_id,
-            fabric: item.fabric,
-            gsm: item.gsm,
-            fit_type: item.fit_type,
-            wash_instructions: item.wash_instructions,
-            is_featured: item.is_featured,
-          })
-          .select('id')
-          .single();
+        const insertRes = await adminDbQuery('products', 'insert', {
+          name: item.name,
+          slug: item.slug,
+          description: item.description,
+          price: item.price,
+          discount_price: item.discount_price,
+          category_id: item.category_id,
+          fabric: item.fabric,
+          gsm: item.gsm,
+          fit_type: item.fit_type,
+          wash_instructions: item.wash_instructions,
+          is_featured: item.is_featured,
+        });
+        const dbProd = insertRes.data[0];
 
         if (dbProd) {
           const dbId = dbProd.id;
-          await supabase.from('product_images').insert([
+          await adminDbQuery('product_images', 'insert', [
             { product_id: dbId, image_url: item.images[0], display_order: 0 },
             { product_id: dbId, image_url: item.images[1], display_order: 1 }
           ]);
-          await supabase.from('inventory').insert(
+          await adminDbQuery('inventory', 'insert',
             item.inventory.map((inv: any) => ({
               product_id: dbId,
               size: inv.size,

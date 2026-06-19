@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/adminApi';
 import { formatPrice } from '@/lib/utils';
 import { RefreshCw, ClipboardList, Info } from 'lucide-react';
 
@@ -14,38 +15,30 @@ export default function AdminOrders() {
     try {
       setLoading(true);
       
-      // Load local orders for offline/local prototype mode
-      let localOrdersList: any[] = [];
-      try {
-        const stored = localStorage.getItem('arviik_custom_orders');
-        if (stored) {
-          localOrdersList = JSON.parse(stored);
-        }
-      } catch (e) {
-        console.error('Failed to load local orders:', e);
-      }
-
-      let dbOrders: any[] = [];
+      let loadedOrders = [];
       try {
         const { data, error } = await supabase
           .from('orders')
           .select('*, order_items(*, products(name))')
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error(error);
-        } else if (data) {
-          dbOrders = data;
+        if (error) throw error;
+        if (data && data.length > 0) {
+          loadedOrders = data;
+          localStorage.setItem('arviik_custom_orders', JSON.stringify(data));
+        } else {
+          // Check local storage if DB succeeds but is empty
+          const stored = localStorage.getItem('arviik_custom_orders');
+          if (stored) loadedOrders = JSON.parse(stored);
         }
       } catch (dbErr) {
-        console.warn('Supabase orders fetch skipped/failed, using local/mock orders:', dbErr);
+        console.warn('Supabase orders fetch failed, checking local cache:', dbErr);
+        const stored = localStorage.getItem('arviik_custom_orders');
+        if (stored) loadedOrders = JSON.parse(stored);
       }
 
-      // Combine both lists (local first, then DB)
-      const combined = [...localOrdersList, ...dbOrders];
-
-      if (combined.length > 0) {
-        setOrders(combined);
+      if (loadedOrders.length > 0) {
+        setOrders(loadedOrders);
       } else {
         // Fallback mock orders
         const mockList = [
@@ -114,12 +107,7 @@ export default function AdminOrders() {
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
-
-      if (error) throw error;
+      await adminDbQuery('orders', 'update', { status: newStatus }, { id: orderId });
     } catch (e) {
       console.warn('Supabase status update skipped/failed, applying locally:', e);
     }

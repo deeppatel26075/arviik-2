@@ -76,18 +76,21 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
   React.useEffect(() => {
     try {
-      const stored = localStorage.getItem('arviik_custom_products');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
-        if (hasOldMocks) {
-          localStorage.setItem('arviik_custom_products', JSON.stringify(products));
-          setDisplayProducts(products);
-        } else if (parsed && parsed.length > 0) {
-          setDisplayProducts(parsed.filter((p: any) => !p.is_hidden));
-        }
-      } else {
+      if (products && products.length > 0) {
+        setDisplayProducts(products);
         localStorage.setItem('arviik_custom_products', JSON.stringify(products));
+      } else {
+        const stored = localStorage.getItem('arviik_custom_products');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
+          if (hasOldMocks) {
+            localStorage.setItem('arviik_custom_products', JSON.stringify(products));
+            setDisplayProducts(products);
+          } else if (parsed && parsed.length > 0) {
+            setDisplayProducts(parsed.filter((p: any) => !p.is_hidden));
+          }
+        }
       }
     } catch (e) {
       console.error('Failed to load custom products:', e);
@@ -96,40 +99,38 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
   React.useEffect(() => {
     try {
-      const storedSettings = localStorage.getItem('arviik_custom_settings');
-      if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        setActiveSettings({
-          ...parsed,
-          ...settings // Server settings take precedence
-        });
-      } else if (settings && Object.keys(settings).length > 0) {
-        localStorage.setItem('arviik_custom_settings', JSON.stringify(settings));
+      if (settings && Object.keys(settings).length > 0) {
         setActiveSettings(settings);
+        localStorage.setItem('arviik_custom_settings', JSON.stringify(settings));
       } else {
-        const defaultSettings = {
-          hero_config: {
-            title: 'WEAR YOUR IDENTITY',
-            slogan: 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.',
-            image_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600'
-          },
-          story_config: {
-            title: 'Engineered Streetwear',
-            desc: 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity. Our oversized fits are engineered from custom-woven 240 GSM ring-spun cotton, creating a structure that holds its shape wash after wash.',
-            image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'
-          },
-          general_config: { bg_style: 'default', custom_bg_color: '#fafaf9', bg_image_url: '' },
-          gallery_config: {
-            img1: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600',
-            img2: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
-            img3: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600',
-            img4: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600',
-            img5: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=600',
-            img6: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600'
-          }
-        };
-        localStorage.setItem('arviik_custom_settings', JSON.stringify(defaultSettings));
-        setActiveSettings(defaultSettings);
+        const storedSettings = localStorage.getItem('arviik_custom_settings');
+        if (storedSettings) {
+          setActiveSettings(JSON.parse(storedSettings));
+        } else {
+          const defaultSettings = {
+            hero_config: {
+              title: 'WEAR YOUR IDENTITY',
+              slogan: 'Heavyweight fabrics. Bold printed oversized silhouettes. Premium local craftsmanship.',
+              image_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600'
+            },
+            story_config: {
+              title: 'Engineered Streetwear',
+              desc: 'At ARVIIK, we believe clothing is more than fabric—it is an outward projection of internal identity. Our oversized fits are engineered from custom-woven 240 GSM ring-spun cotton, creating a structure that holds its shape wash after wash.',
+              image_url: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800'
+            },
+            general_config: { bg_style: 'default', custom_bg_color: '#fafaf9', bg_image_url: '' },
+            gallery_config: {
+              img1: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600',
+              img2: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
+              img3: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600',
+              img4: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600',
+              img5: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=600',
+              img6: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600'
+            }
+          };
+          localStorage.setItem('arviik_custom_settings', JSON.stringify(defaultSettings));
+          setActiveSettings(defaultSettings);
+        }
       }
     } catch (e) {
       console.error('Failed to load settings:', e);

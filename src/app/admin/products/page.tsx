@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/adminApi';
 import { formatPrice } from '@/lib/utils';
 import { MOCK_PRODUCTS } from '@/app/page';
 import { Plus, Edit2, Trash2, Check, Eye, EyeOff, Star, X, RefreshCw } from 'lucide-react';
@@ -89,41 +90,44 @@ export default function AdminProducts() {
       }
       setCategories(loadedCats);
 
-      // Check products
+      // Check products - Try Supabase first
       let loadedProds = [];
-      const storedProds = localStorage.getItem('arviik_custom_products');
-      if (storedProds) {
-        const parsed = JSON.parse(storedProds);
-        const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
-        if (hasOldMocks) {
-          loadedProds = MOCK_PRODUCTS.map(p => ({
+      try {
+        const { data: prods } = await supabase
+          .from('products')
+          .select('*, category:categories(name), product_images(image_url), inventory(size, quantity)');
+
+        if (prods && prods.length > 0) {
+          loadedProds = prods.map((p) => ({
             ...p,
-            categoryName: p.category.name,
-            images: p.product_images.map(img => img.image_url),
-            sizes: p.inventory,
-            inventory: p.inventory
+            categoryName: p.category?.name || 'Streetwear',
+            images: p.product_images?.map((img: any) => img.image_url) || [],
+            sizes: p.inventory || [],
           }));
           localStorage.setItem('arviik_custom_products', JSON.stringify(loadedProds));
         } else {
-          loadedProds = parsed;
+          // If query worked but returned empty, check local storage
+          const storedProds = localStorage.getItem('arviik_custom_products');
+          if (storedProds) loadedProds = JSON.parse(storedProds);
         }
-      } else {
-        try {
-          const { data: prods } = await supabase
-            .from('products')
-            .select('*, category:categories(name), product_images(image_url), inventory(size, quantity)');
-
-          if (prods && prods.length > 0) {
-            loadedProds = prods.map((p) => ({
+      } catch (prodErr) {
+        console.warn('Failed to load DB products, checking local cache:', prodErr);
+        const storedProds = localStorage.getItem('arviik_custom_products');
+        if (storedProds) {
+          const parsed = JSON.parse(storedProds);
+          const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
+          if (hasOldMocks) {
+            loadedProds = MOCK_PRODUCTS.map(p => ({
               ...p,
-              categoryName: p.category?.name || 'Streetwear',
-              images: p.product_images?.map((img: any) => img.image_url) || [],
-              sizes: p.inventory || [],
+              categoryName: p.category.name,
+              images: p.product_images.map(img => img.image_url),
+              sizes: p.inventory,
+              inventory: p.inventory
             }));
             localStorage.setItem('arviik_custom_products', JSON.stringify(loadedProds));
+          } else {
+            loadedProds = parsed;
           }
-        } catch (prodErr) {
-          console.error('Failed to load DB products:', prodErr);
         }
       }
 
@@ -251,13 +255,12 @@ export default function AdminProducts() {
 
     try {
       if (editingId) {
-        // Edit product in Supabase if online
-        const { error } = await supabase.from('products').update(productPayload).eq('id', editingId);
-        if (error) throw error;
+        // Edit product in Supabase via admin API
+        await adminDbQuery('products', 'update', productPayload, { id: editingId });
 
-        await supabase.from('product_images').delete().eq('product_id', editingId);
-        if (imageUrl1) await supabase.from('product_images').insert({ product_id: editingId, image_url: imageUrl1, display_order: 0 });
-        if (imageUrl2) await supabase.from('product_images').insert({ product_id: editingId, image_url: imageUrl2, display_order: 1 });
+        await adminDbQuery('product_images', 'delete', null, { product_id: editingId });
+        if (imageUrl1) await adminDbQuery('product_images', 'insert', { product_id: editingId, image_url: imageUrl1, display_order: 0 });
+        if (imageUrl2) await adminDbQuery('product_images', 'insert', { product_id: editingId, image_url: imageUrl2, display_order: 1 });
 
         const sizesToUpdate = [
           { size: 'S', qty: parseInt(stockS) },
@@ -267,25 +270,22 @@ export default function AdminProducts() {
           { size: 'XXL', qty: parseInt(stockXXL) },
         ];
         for (const item of sizesToUpdate) {
-          await supabase
-            .from('inventory')
-            .upsert({ product_id: editingId, size: item.size, quantity: item.qty }, { onConflict: 'product_id,size' });
+          await adminDbQuery(
+            'inventory',
+            'upsert',
+            { product_id: editingId, size: item.size, quantity: item.qty },
+            null,
+            { onConflict: 'product_id,size' }
+          );
         }
       } else {
-        // Add new product in Supabase if online
-        const { data: newProd, error: insertError } = await supabase
-          .from('products')
-          .insert(productPayload)
-          .select('id')
-          .single();
-
-        if (insertError) throw insertError;
-
-        const newId = newProd.id;
+        // Add new product in Supabase via admin API
+        const insertRes = await adminDbQuery('products', 'insert', productPayload);
+        const newId = insertRes.data[0].id;
         mockNewItem.id = newId;
 
-        if (imageUrl1) await supabase.from('product_images').insert({ product_id: newId, image_url: imageUrl1, display_order: 0 });
-        if (imageUrl2) await supabase.from('product_images').insert({ product_id: newId, image_url: imageUrl2, display_order: 1 });
+        if (imageUrl1) await adminDbQuery('product_images', 'insert', { product_id: newId, image_url: imageUrl1, display_order: 0 });
+        if (imageUrl2) await adminDbQuery('product_images', 'insert', { product_id: newId, image_url: imageUrl2, display_order: 1 });
 
         const inventoryPayload = [
           { product_id: newId, size: 'S', quantity: parseInt(stockS) },
@@ -294,7 +294,7 @@ export default function AdminProducts() {
           { product_id: newId, size: 'XL', quantity: parseInt(stockXL) },
           { product_id: newId, size: 'XXL', quantity: parseInt(stockXXL) },
         ];
-        await supabase.from('inventory').insert(inventoryPayload);
+        await adminDbQuery('inventory', 'insert', inventoryPayload);
       }
 
       // Sync local storage as well
@@ -318,9 +318,9 @@ export default function AdminProducts() {
 
   const toggleHide = async (id: string, currentHidden: boolean) => {
     try {
-      await supabase.from('products').update({ is_hidden: !currentHidden }).eq('id', id);
+      await adminDbQuery('products', 'update', { is_hidden: !currentHidden }, { id });
     } catch (e) {
-      console.warn('Supabase update hidden state failed, applying locally');
+      console.warn('Supabase update hidden state failed, applying locally:', e);
     }
     const updated = products.map((p) => (p.id === id ? { ...p, is_hidden: !currentHidden } : p));
     setProducts(updated);
@@ -329,9 +329,9 @@ export default function AdminProducts() {
 
   const toggleFeatured = async (id: string, currentFeatured: boolean) => {
     try {
-      await supabase.from('products').update({ is_featured: !currentFeatured }).eq('id', id);
+      await adminDbQuery('products', 'update', { is_featured: !currentFeatured }, { id });
     } catch (e) {
-      console.warn('Supabase update featured state failed, applying locally');
+      console.warn('Supabase update featured state failed, applying locally:', e);
     }
     const updated = products.map((p) => (p.id === id ? { ...p, is_featured: !currentFeatured } : p));
     setProducts(updated);
@@ -341,9 +341,9 @@ export default function AdminProducts() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      await supabase.from('products').delete().eq('id', id);
+      await adminDbQuery('products', 'delete', null, { id });
     } catch (e) {
-      console.warn('Supabase delete failed, applying locally');
+      console.warn('Supabase delete failed, applying locally:', e);
     }
     const updated = products.filter((p) => p.id !== id);
     setProducts(updated);

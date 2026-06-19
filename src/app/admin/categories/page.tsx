@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/adminApi';
 import { Plus, Trash2, Check, RefreshCw, X, FolderOpen } from 'lucide-react';
 
 export default function AdminCategories() {
@@ -19,24 +20,27 @@ export default function AdminCategories() {
       setLoading(true);
       let loadedCats = [];
 
-      // Try fetching from localStorage first to check fallback caching
-      const storedCats = localStorage.getItem('arviik_custom_categories');
-      if (storedCats) {
-        loadedCats = JSON.parse(storedCats);
-      } else {
-        try {
-          const { data, error } = await supabase
-            .from('categories')
-            .select('*')
-            .order('name', { ascending: true });
-          
-          if (error) throw error;
-          if (data && data.length > 0) {
-            loadedCats = data;
-            localStorage.setItem('arviik_custom_categories', JSON.stringify(data));
-          }
-        } catch (dbErr) {
-          console.error('Failed to load DB categories:', dbErr);
+      // Try fetching from Supabase first
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name', { ascending: true });
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          loadedCats = data;
+          localStorage.setItem('arviik_custom_categories', JSON.stringify(data));
+        } else {
+          // If query worked but returned empty, check local storage
+          const storedCats = localStorage.getItem('arviik_custom_categories');
+          if (storedCats) loadedCats = JSON.parse(storedCats);
+        }
+      } catch (dbErr) {
+        console.error('Failed to load DB categories, checking local cache:', dbErr);
+        const storedCats = localStorage.getItem('arviik_custom_categories');
+        if (storedCats) {
+          loadedCats = JSON.parse(storedCats);
         }
       }
 
@@ -93,14 +97,9 @@ export default function AdminCategories() {
     };
 
     try {
-      // Try writing to Supabase
-      const { data, error } = await supabase
-        .from('categories')
-        .insert(newCategoryPayload)
-        .select('*')
-        .single();
-
-      if (error) throw error;
+      // Try writing to Supabase via admin API
+      const insertRes = await adminDbQuery('categories', 'insert', newCategoryPayload);
+      const data = insertRes.data[0];
 
       if (data) {
         const updated = [...categories, data].sort((a, b) => a.name.localeCompare(b.name));
@@ -133,13 +132,8 @@ export default function AdminCategories() {
     setStatusMsg({ type: '', text: '' });
 
     try {
-      // Try deleting from Supabase
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      // Try deleting from Supabase via admin API
+      await adminDbQuery('categories', 'delete', null, { id });
 
       const updated = categories.filter((c) => c.id !== id);
       setCategories(updated);

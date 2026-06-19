@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { adminDbQuery } from '@/lib/adminApi';
 import { formatPrice } from '@/lib/utils';
 import { Plus, Trash2, Calendar, Tag, RefreshCw } from 'lucide-react';
 
@@ -63,13 +64,8 @@ export default function AdminCoupons() {
     };
 
     try {
-      const { data, error } = await supabase
-        .from('coupons')
-        .insert(payload)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const res = await adminDbQuery('coupons', 'insert', payload);
+      const data = res.data[0];
 
       setCoupons(prev => [data, ...prev]);
       setCode('');
@@ -100,7 +96,7 @@ export default function AdminCoupons() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
     try {
-      await supabase.from('coupons').delete().eq('id', id);
+      await adminDbQuery('coupons', 'delete', null, { id });
       setCoupons(prev => prev.filter(c => c.id !== id));
     } catch (e) {
       setCoupons(prev => prev.filter(c => c.id !== id));
