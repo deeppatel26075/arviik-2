@@ -5,65 +5,42 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { ShoppingBag, Heart, User, Menu, X, Search, Volume2, VolumeX } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SoundPlayer } from '@/components/SoundExperience';
-import { supabase } from '@/lib/supabase';
+import { ShoppingBag, Heart, User, Menu, X, Search } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import MegaMenu from './Navigation/MegaMenu';
+import MobileMenu from './Navigation/MobileMenu';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { cart, wishlist } = useCart();
   const { user, profile } = useAuth();
   
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [announcementIdx, setAnnouncementIdx] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
+  const announcements = [
+    "🔥 Oversized Tees SALE | Buy Any 3 @1199",
+    "⚡ FREE SHIPPING ACROSS INDIA",
+    "⚡ EASY RETURNS & COD AVAILABLE",
+    "⚡ LIMITED DROP LIVE | SHOP NOW"
+  ];
+
+  // Rotate announcement messages
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSoundEnabled(localStorage.getItem('arviik_sound_enabled') !== 'false');
-    }
+    const interval = setInterval(() => {
+      setAnnouncementIdx((prev) => (prev + 1) % announcements.length);
+    }, 3500);
+    return () => clearInterval(interval);
   }, []);
 
-  // Detect scroll to add shadow/border
+  // Listen to mobile bottom nav search requests
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const [shippingThreshold, setShippingThreshold] = useState(1500);
-
-  // Load dynamic shipping config threshold
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const local = localStorage.getItem('arviik_custom_settings');
-        if (local) {
-          const parsed = JSON.parse(local);
-          if (parsed.general_config?.shipping_threshold !== undefined) {
-            setShippingThreshold(Number(parsed.general_config.shipping_threshold));
-          }
-        }
-        const { data } = await supabase
-          .from('site_settings')
-          .select('*')
-          .eq('key', 'general_config')
-          .single();
-        if (data && data.value?.shipping_threshold !== undefined) {
-          setShippingThreshold(Number(data.value.shipping_threshold));
-        }
-      } catch (e) {}
-    };
-    loadConfig();
+    const handleSearchOpenEvent = () => setSearchOpen(true);
+    window.addEventListener('open-search', handleSearchOpenEvent);
+    return () => window.removeEventListener('open-search', handleSearchOpenEvent);
   }, []);
 
   // Skip rendering Navbar on Admin Panel routes
@@ -75,172 +52,146 @@ export default function Navbar() {
   const wishlistCount = wishlist.length;
 
   const triggerCartOpen = () => {
-    // Dispatch custom event to open the CartDrawer
     const event = new CustomEvent('open-cart');
     window.dispatchEvent(event);
   };
 
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
-          scrolled
-            ? 'bg-stone-50/80 backdrop-blur-md border-b border-stone-200/50 shadow-sm'
-            : 'bg-transparent border-b border-transparent'
-        }`}
-      >
-        {/* Promotional Scrolling Marquee Banner */}
-        <div className="bg-stone-950 text-lime-400 py-2 overflow-hidden border-b border-stone-900/10 text-[9px] font-bold uppercase tracking-[0.2em] select-none">
-          <div className="whitespace-nowrap flex animate-marquee">
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span className="flex-shrink-0">⚡ BUY ANY 3 T-SHIRTS AT ₹1199 — USE CODE: B31199 &nbsp;&nbsp;&nbsp;&nbsp; ⚡ FREE SHIPPING ACROSS INDIA ON ORDERS ABOVE ₹{shippingThreshold} &nbsp;&nbsp;&nbsp;&nbsp; ⚡ 10% OFF ON ALL PREPAID ORDERS &nbsp;&nbsp;&nbsp;&nbsp;</span>
-          </div>
+      <header className="fixed top-0 left-0 w-full z-40 bg-white border-b border-stone-200">
+        {/* Dynamic Announcement Bar */}
+        <div className="bg-secondary text-white py-2 text-center text-xs font-black tracking-wider uppercase select-none transition-all duration-300">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={announcementIdx}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+            >
+              {announcements[announcementIdx]}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
-          scrolled ? 'py-3' : 'py-5'
-        }`}>
-          <div className="flex items-center justify-between">
-            {/* Mobile Menu Trigger */}
-            <div className="flex lg:hidden">
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="text-stone-900 focus:outline-none"
-              >
-                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
+        {/* Main Navbar */}
+        <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between relative">
+          
+          {/* Left section: Hamburger (mobile) + Logo */}
+          <div className="flex items-center space-x-3.5">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden text-stone-900 focus:outline-none p-1"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            <Link
+              href="/"
+              className="font-syne font-extrabold text-2xl sm:text-3xl uppercase tracking-normal select-none italic logo-retro transform skew-x-[-12deg] inline-block pr-1"
+            >
+              <span>A</span>
+              <span className="inline-block scale-x-[-1]">R</span>
+              <span>V</span>
+              <span>I</span>
+              <span>I</span>
+              <span className="inline-block scale-x-[-1]">K</span>
+            </Link>
+          </div>
+
+          {/* Center section: Mega Menu hover link row (Desktop Only) */}
+          <nav className="hidden md:flex items-center space-x-8 text-xs font-black tracking-widest uppercase select-none">
+            <div
+              className="relative py-2 cursor-pointer"
+              onMouseEnter={() => setShowMegaMenu(true)}
+              onMouseLeave={() => setShowMegaMenu(false)}
+            >
+              <span className="text-stone-900 hover:text-secondary transition-colors">MEN</span>
+              {showMegaMenu && <MegaMenu onClose={() => setShowMegaMenu(false)} />}
             </div>
 
-            {/* Left Nav (Desktop) */}
-            <nav className="hidden lg:flex space-x-8 text-xs font-semibold tracking-widest uppercase select-none">
-              <Link href="/shop" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
-                DROPS
-              </Link>
-              <Link href="/lookbook" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
-                LOOKBOOK
-              </Link>
-              <Link href="/journal" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
-                JOURNAL
-              </Link>
-              <Link href="/#story" className="text-stone-900 hover:text-stone-500 transition-colors sound-hover sound-click">
-                THE HOUSE
-              </Link>
-            </nav>
+            <Link href="/shop?tag=NEW+ARRIVAL" className="text-stone-900 hover:text-secondary transition-colors">
+              NEW ARRIVALS
+            </Link>
 
-            {/* Center Logo */}
-            <div className="flex-shrink-0">
-              <Link
-                href="/"
-                className="font-syne font-extrabold text-2xl sm:text-3xl tracking-[0.25em] text-stone-900 transition-opacity hover:opacity-85 sound-click sound-hover"
-              >
-                ARVIIK
-              </Link>
-            </div>
+            <Link href="/shop?category=Oversized+T-Shirts" className="text-stone-900 hover:text-secondary transition-colors">
+              OVERSIZED T-SHIRTS
+            </Link>
 
-            {/* Right Icons */}
-            <div className="flex items-center space-x-4 sm:space-x-6">
-              {/* Sound Toggle switch */}
-              <button
-                onClick={() => {
-                  const current = localStorage.getItem('arviik_sound_enabled') !== 'false';
-                  localStorage.setItem('arviik_sound_enabled', (!current).toString());
-                  setSoundEnabled(!current);
-                  SoundPlayer.playTick();
-                }}
-                className="text-stone-900 hover:opacity-70 transition-opacity flex items-center sound-click"
-                title="Toggle Sound Experience"
-              >
-                {soundEnabled ? <Volume2 className="h-5 w-5 text-lime-600" /> : <VolumeX className="h-5 w-5 text-stone-400" />}
-              </button>
+            <Link href="/shop?category=Joggers" className="text-stone-900 hover:text-secondary transition-colors">
+              JOGGERS
+            </Link>
 
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="text-stone-900 hover:opacity-70 transition-opacity sound-click"
-              >
-                <Search className="h-5 w-5" />
-              </button>
+            <Link href="/shop?category=Hoodies" className="text-stone-900 hover:text-secondary transition-colors">
+              HOODIES
+            </Link>
 
-              <Link
-                href="/profile"
-                className="text-stone-900 hover:opacity-70 transition-opacity relative sound-click"
-              >
-                <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-stone-950 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
+            <Link href="/shop?tag=BESTSELLER" className="text-stone-900 hover:text-secondary transition-colors text-sale">
+              BESTSELLERS
+            </Link>
+          </nav>
 
-              <Link
-                href={user ? '/profile' : '/login'}
-                className="text-stone-900 hover:opacity-70 transition-opacity sound-click"
-              >
-                <User className="h-5 w-5" />
-              </Link>
+          {/* Right section: Action Icons */}
+          <div className="flex items-center space-x-4 sm:space-x-5">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="text-stone-900 hover:text-secondary transition-opacity p-1 cursor-pointer"
+            >
+              <Search className="h-5 w-5" />
+            </button>
 
-              <button
-                onClick={triggerCartOpen}
-                className="text-stone-900 hover:opacity-70 transition-opacity relative sound-click"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                {totalCartItems > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-stone-900 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {totalCartItems}
-                  </span>
-                )}
-              </button>
-            </div>
+            <Link
+              href="/wishlist"
+              className="text-stone-900 hover:text-secondary transition-opacity relative p-1 hidden sm:block"
+            >
+              <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-sale text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href={user ? '/account' : '/login'}
+              className="text-stone-900 hover:text-secondary transition-opacity p-1 hidden sm:block"
+            >
+              <User className="h-5 w-5" />
+            </Link>
+
+            <button
+              onClick={triggerCartOpen}
+              className="text-stone-900 hover:text-secondary transition-opacity relative p-1"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {totalCartItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-secondary text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white animate-pulse">
+                  {totalCartItems}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Spacer to push content down when Navbar is transparent but page loads */}
-      <div className="h-28 w-full" />
+      {/* Spacer to push content down below fixed Navbar */}
+      <div className="h-24 w-full" />
 
-      {/* Mobile Drawer Navigation */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-28 left-0 w-full bg-stone-50 border-b border-stone-200 z-30 lg:hidden shadow-lg font-sans"
-          >
-            <div className="px-6 py-8 flex flex-col space-y-6 text-sm font-semibold tracking-widest uppercase text-stone-950">
-              <Link href="/shop" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
-                DROPS
-              </Link>
-              <Link href="/lookbook" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
-                LOOKBOOK
-              </Link>
-              <Link href="/journal" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
-                JOURNAL
-              </Link>
-              <Link href="/#story" onClick={() => setIsOpen(false)} className="hover:text-stone-500 sound-click">
-                THE HOUSE
-              </Link>
-              {profile?.role === 'admin' && (
-                <Link href="/admin" onClick={() => setIsOpen(false)} className="text-accent hover:opacity-80 sound-click">
-                  ADMIN COMMAND CENTER
-                </Link>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Full-Screen Mobile Drawer */}
+      <MobileMenu
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        isAdmin={profile?.role === 'admin'}
+      />
 
-      {/* Search Overlay */}
+      {/* Search Autocomplete Overlay */}
       <AnimatePresence>
         {searchOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/40 backdrop-blur-sm z-50 flex items-start justify-center pt-24 px-4"
+            className="fixed inset-0 bg-stone-950/40 backdrop-blur-xs z-50 flex items-start justify-center pt-24 px-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: -20 }}
@@ -250,7 +201,7 @@ export default function Navbar() {
             >
               <div className="flex items-center justify-between border-b border-stone-200 pb-3 mb-4">
                 <h3 className="font-syne font-bold uppercase text-stone-900 tracking-wider text-sm">
-                  Search ARVIIK
+                  Search ARVIIK Catalog
                 </h3>
                 <button
                   onClick={() => setSearchOpen(false)}
@@ -271,10 +222,10 @@ export default function Navbar() {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search for printed oversized t-shirts..."
+                    placeholder="Search for black oversized tees, joggers, hoodies..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:border-stone-900"
+                    className="w-full bg-stone-50 border border-stone-250 px-4 py-3 text-sm focus:outline-none focus:border-stone-900"
                     autoFocus
                   />
                   <button
@@ -292,3 +243,4 @@ export default function Navbar() {
     </>
   );
 }
+

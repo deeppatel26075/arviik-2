@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import SoundExperience from '@/components/SoundExperience';
 import Atelier from '@/components/Atelier';
+import MobileBottomNav from '@/components/Navigation/MobileBottomNav';
 
 const inter = Inter({
   variable: '--font-sans',
@@ -48,7 +49,8 @@ export default function RootLayout({
             <CartDrawer />
             <SoundExperience />
             <Atelier />
-            <main className="flex-grow flex flex-col">{children}</main>
+            <main className="flex-grow flex flex-col pb-16 md:pb-0">{children}</main>
+            <MobileBottomNav />
             <Footer />
           </CartProvider>
         </AuthProvider>
@@ -61,3 +63,4 @@ export default function RootLayout({
     </html>
   );
 }
+

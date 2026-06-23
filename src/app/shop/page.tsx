@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { MOCK_PRODUCTS } from '../page';
+import { PRODUCTS } from '@/data/products';
 import ShopClient from './ShopClient';
 import { Suspense } from 'react';
 
@@ -21,7 +21,8 @@ export default async function ShopPage() {
     const { data: prodData } = await supabase
       .from('products')
       .select('*, category:categories(name), product_images(image_url), inventory(size, quantity)')
-      .eq('is_hidden', false);
+      .eq('is_hidden', false)
+      .order('created_at', { ascending: false });
     
     if (prodData && prodData.length > 0) {
       dbProducts = prodData.map(prod => ({
@@ -42,7 +43,8 @@ export default async function ShopPage() {
     console.error('Error fetching shop data from Supabase, using mocks:', err);
   }
 
-  const finalProducts = dbProducts.length > 0 ? dbProducts : MOCK_PRODUCTS;
+  const finalProducts = dbProducts.length > 0 ? dbProducts : PRODUCTS;
+
   
   // Set default categories if database is empty
   const finalCategories = dbCategories.length > 0 ? dbCategories : [

@@ -213,7 +213,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error || !data) {
-        setCouponError('Invalid coupon code');
+        // Fallback to local couponService
+        const { couponService } = await import('@/services/couponService');
+        const validation = couponService.validateCoupon(code, getCartSubtotal());
+        if (validation.isValid && validation.coupon) {
+          setCoupon({
+            code: validation.coupon.code,
+            discountPercent: validation.coupon.type === 'percentage' 
+              ? validation.coupon.value 
+              : Math.round((validation.coupon.value / getCartSubtotal()) * 100)
+          });
+          return true;
+        }
+        setCouponError(validation.message);
         return false;
       }
 
@@ -234,11 +246,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return true;
     } catch (err) {
-      console.error('Error applying coupon:', err);
-      setCouponError('Error applying coupon');
+      console.error('Error applying coupon, trying local validation fallback:', err);
+      try {
+        const { couponService } = await import('@/services/couponService');
+        const validation = couponService.validateCoupon(code, getCartSubtotal());
+        if (validation.isValid && validation.coupon) {
+          setCoupon({
+            code: validation.coupon.code,
+            discountPercent: validation.coupon.type === 'percentage' 
+              ? validation.coupon.value 
+              : Math.round((validation.coupon.value / getCartSubtotal()) * 100)
+          });
+          return true;
+        }
+        setCouponError(validation.message);
+      } catch (e) {
+        setCouponError('Error applying coupon');
+      }
       return false;
     }
   };
+
 
   const removeCoupon = () => {
     setCoupon(null);

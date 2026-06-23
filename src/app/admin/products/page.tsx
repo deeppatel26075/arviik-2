@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { adminDbQuery } from '@/lib/adminApi';
 import { formatPrice } from '@/lib/utils';
-import { MOCK_PRODUCTS } from '@/app/page';
+import { PRODUCTS } from '@/data/products';
 import { Plus, Edit2, Trash2, Check, Eye, EyeOff, Star, X, RefreshCw } from 'lucide-react';
 
 export default function AdminProducts() {
@@ -115,14 +115,15 @@ export default function AdminProducts() {
         const storedProds = localStorage.getItem('arviik_custom_products');
         if (storedProds) {
           const parsed = JSON.parse(storedProds);
-          const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE');
+          const hasOldMocks = parsed.some((p: any) => p.name === 'ARCHIVE-01 GRAPHIC TEE' || p.name === 'ESSENTIALS LOGO TEE' || p.category && typeof p.category === 'object' && p.category.name);
           if (hasOldMocks) {
-            loadedProds = MOCK_PRODUCTS.map(p => ({
+            loadedProds = PRODUCTS.map(p => ({
               ...p,
-              categoryName: p.category.name,
-              images: p.product_images.map(img => img.image_url),
-              sizes: p.inventory,
-              inventory: p.inventory
+              categoryName: p.category,
+              category: { name: p.category },
+              images: p.images,
+              sizes: Object.entries(p.stock || {}).map(([size, quantity]) => ({ size, quantity })),
+              inventory: Object.entries(p.stock || {}).map(([size, quantity]) => ({ size, quantity }))
             }));
             localStorage.setItem('arviik_custom_products', JSON.stringify(loadedProds));
           } else {
@@ -132,12 +133,13 @@ export default function AdminProducts() {
       }
 
       if (loadedProds.length === 0) {
-        loadedProds = MOCK_PRODUCTS.map(p => ({
+        loadedProds = PRODUCTS.map(p => ({
           ...p,
-          categoryName: p.category.name,
-          images: p.product_images.map(img => img.image_url),
-          sizes: p.inventory,
-          inventory: p.inventory
+          categoryName: p.category,
+          category: { name: p.category },
+          images: p.images,
+          sizes: Object.entries(p.stock || {}).map(([size, quantity]) => ({ size, quantity })),
+          inventory: Object.entries(p.stock || {}).map(([size, quantity]) => ({ size, quantity }))
         }));
         localStorage.setItem('arviik_custom_products', JSON.stringify(loadedProds));
       }

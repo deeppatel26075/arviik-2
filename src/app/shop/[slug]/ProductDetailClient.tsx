@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart, WishlistItem } from '@/context/CartContext';
 import { formatPrice } from '@/lib/utils';
 import ImageZoom from '@/components/ImageZoom';
-import { Heart, ShoppingBag, Truck, Info, ChevronRight, Check } from 'lucide-react';
+import { Heart, ShoppingBag, Truck, Info, ChevronRight, HelpCircle, Award, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+import SizeGuide from '@/components/Product/SizeGuide';
+import Review from '@/components/Product/Review';
+import ProductRecommendation from '@/components/Product/ProductRecommendation';
+import { trackRecentlyViewed } from '@/components/Commerce/RecentlyViewed';
+import { analytics } from '@/lib/analytics';
 
 interface ProductImage {
   image_url: string;
@@ -45,22 +51,27 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [quantity, setQuantity] = useState(1);
   const [sizeWarning, setSizeWarning] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'wash'>('details');
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   const images = product.product_images || [];
   const primaryImage = images[activeImageIdx]?.image_url || '/placeholder-tee.jpg';
 
-  const activePrice = product.discount_price && product.discount_price > 0 
-    ? product.discount_price 
-    : product.price;
-  
-  const isDiscounted = product.discount_price !== undefined && product.discount_price !== null && product.discount_price > 0;
+  // Pricing adapters
+  const mrpVal = product.price || 1499;
+  const priceVal = product.discount_price || 599;
+  const discountVal = Math.round(((mrpVal - priceVal) / mrpVal) * 100);
+  const bestPriceVal = Math.round(priceVal * 0.75);
+
   const isFavorited = isInWishlist(product.id);
 
-  // Parse inventory
-  const sizes: ('S' | 'M' | 'L' | 'XL' | 'XXL')[] = ['S', 'M', 'L', 'XL', 'XXL'];
+  // Track product view and recently viewed on mount
+  useEffect(() => {
+    trackRecentlyViewed(product.slug);
+    analytics.trackProductViewed(product.id, product.name, priceVal);
+  }, [product]);
+
   const getStock = (size: 'S' | 'M' | 'L' | 'XL' | 'XXL') => {
-    if (!product.inventory) return 10; // Default fallback
+    if (!product.inventory) return 10;
     const item = product.inventory.find(i => i.size === size);
     return item ? item.quantity : 0;
   };
@@ -71,8 +82,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     const wishItem: WishlistItem = {
       id: product.id,
       name: product.name,
-      price: product.price,
-      discountPrice: product.discount_price,
+      price: mrpVal,
+      discountPrice: priceVal,
       image: images[0]?.image_url || '/placeholder-tee.jpg',
       slug: product.slug,
     };
@@ -92,8 +103,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     addToCart({
       productId: product.id,
       name: product.name,
-      price: product.price,
-      discountPrice: product.discount_price,
+      price: mrpVal,
+      discountPrice: priceVal,
       image: images[0]?.image_url || '/placeholder-tee.jpg',
       slug: product.slug,
       size: selectedSize,
@@ -101,300 +112,242 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       maxStock: stockLimit || 10,
     });
 
+    analytics.trackAddToCart(product.id, product.name, selectedSize, priceVal);
+
     setTimeout(() => {
       setAdding(false);
       if (redirectToCheck) {
+        analytics.trackCheckoutStarted(1, priceVal);
         router.push('/checkout');
       } else {
-        // Trigger Cart Drawer
         const event = new CustomEvent('open-cart');
         window.dispatchEvent(event);
       }
     }, 450);
   };
 
+  const sizes: ('S' | 'M' | 'L' | 'XL' | 'XXL')[] = ['S', 'M', 'L', 'XL', 'XXL'];
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-      
-      {/* 1. Left Side: Product Images Viewer */}
-      <div className="lg:col-span-7 flex flex-col md:flex-row gap-4">
+    <div className="space-y-12 select-none font-sans">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
         
-        {/* Thumbnails list (Desktop - Left Side) */}
-        <div className="order-2 md:order-1 flex md:flex-col overflow-x-auto md:overflow-x-visible gap-3 flex-shrink-0 md:w-20">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveImageIdx(i)}
-              className={`relative aspect-3/4 w-16 md:w-full bg-stone-100 flex-shrink-0 border transition-all ${
-                activeImageIdx === i ? 'border-stone-900 shadow-sm' : 'border-stone-200/50 opacity-70 hover:opacity-100'
-              }`}
-            >
-              {img.image_url.startsWith('data:') ? (
+        {/* Left Side: Product Images Viewer */}
+        <div className="lg:col-span-7 flex flex-col md:flex-row gap-4">
+          {/* Thumbnails list (Desktop - Left Side) */}
+          <div className="order-2 md:order-1 flex md:flex-col overflow-x-auto md:overflow-x-visible gap-3 flex-shrink-0 md:w-20">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveImageIdx(i)}
+                className={`relative aspect-3/4 w-16 md:w-full bg-stone-100 flex-shrink-0 border transition-all ${
+                  activeImageIdx === i ? 'border-stone-900 shadow-sm' : 'border-stone-200/50 opacity-70 hover:opacity-100'
+                }`}
+              >
                 <img
                   src={img.image_url}
                   alt={`${product.name} look ${i + 1}`}
                   className="object-cover w-full h-full absolute inset-0"
                 />
-              ) : (
-                <Image
-                  src={img.image_url}
-                  alt={`${product.name} look ${i + 1}`}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
-              )}
+              </button>
+            ))}
+          </div>
+
+          {/* Primary Zoom Display */}
+          <div className="order-1 md:order-2 flex-grow relative bg-white border border-stone-200/40 rounded-xs shadow-xs">
+            <ImageZoom src={primaryImage} alt={product.name} />
+            
+            {/* Wishlist Heart Toggle */}
+            <button
+              onClick={handleWishlistClick}
+              className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/95 backdrop-blur-xs text-stone-900 shadow-md hover:bg-white transition-colors"
+            >
+              <Heart
+                className={`h-5 w-5 ${
+                  isFavorited ? 'fill-sale text-sale' : 'text-stone-700'
+                }`}
+              />
             </button>
-          ))}
+          </div>
         </div>
 
-        {/* Primary Zoom Display */}
-        <div className="order-1 md:order-2 flex-grow relative bg-white border border-stone-200/40 rounded-xs shadow-xs">
-          <ImageZoom src={primaryImage} alt={product.name} />
-          
-          {/* Wishlist Heart Toggle */}
-          <button
-            onClick={handleWishlistClick}
-            className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/95 backdrop-blur-xs text-stone-900 shadow-md hover:bg-white transition-colors"
-          >
-            <Heart
-              className={`h-5 w-5 ${
-                isFavorited ? 'fill-accent text-accent' : 'text-stone-700'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
+        {/* Right Side: Product Details buy panel */}
+        <div className="lg:col-span-5 flex flex-col justify-start space-y-6 lg:py-2">
+          <div className="space-y-1">
+            <span className="text-[9px] text-stone-400 font-bold uppercase tracking-[0.25em] block">
+              ARVIIK STREETWEAR CO.
+            </span>
+            <h1 className="font-syne font-black text-2xl md:text-3xl uppercase tracking-wider text-stone-950">
+              {product.name}
+            </h1>
+          </div>
 
-      {/* 2. Right Side: Product Buy panel */}
-      <div className="lg:col-span-5 flex flex-col justify-start space-y-6 lg:py-2">
-        <div className="space-y-1.5">
-          <span className="text-[10px] text-stone-400 font-bold uppercase tracking-[0.25em]">
-            {product.category?.name || 'Streetwear'}
-          </span>
-          <h1 className="font-syne font-extrabold text-2xl md:text-3xl uppercase tracking-wider text-stone-950">
-            {product.name}
-          </h1>
-        </div>
-
-        {/* Pricing */}
-        <div className="flex items-center space-x-3 pb-4 border-b border-stone-200/80">
-          <span className="text-xl font-extrabold text-stone-950">
-            {formatPrice(activePrice)}
-          </span>
-          {isDiscounted && (
+          {/* Multi-Price Listing */}
+          <div className="flex items-center space-x-3 pb-4 border-b border-stone-200/80">
+            <span className="text-xl font-extrabold text-stone-950">
+              {formatPrice(priceVal)}
+            </span>
             <span className="text-sm text-stone-400 line-through">
-              {formatPrice(product.price)}
+              {formatPrice(mrpVal)}
             </span>
-          )}
-        </div>
-
-        {/* Short info description */}
-        <p className="text-xs text-stone-600 leading-relaxed font-light">
-          {product.description}
-        </p>
-
-        {/* Size Selection */}
-        <div className="space-y-3 pt-2">
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-bold uppercase tracking-wider text-stone-900">
-              Select Size
-            </span>
-            <span className="text-stone-400 hover:text-stone-900 cursor-pointer underline tracking-wider font-semibold">
-              Size Guide
+            <span className="text-xs text-sale font-black uppercase">
+              {discountVal}% OFF
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            {sizes.map((size) => {
-              const stock = getStock(size);
-              const isAvailable = stock > 0;
-              return (
-                <button
-                  key={size}
-                  disabled={!isAvailable}
-                  onClick={() => {
-                    setSelectedSize(size);
-                    setSizeWarning(false);
-                  }}
-                  className={`border font-semibold text-xs px-5 py-3 rounded-sm flex items-center justify-center transition-colors uppercase ${
-                    selectedSize === size
-                      ? 'bg-stone-950 text-white border-stone-950 shadow-sm'
-                      : !isAvailable
-                      ? 'border-stone-100 text-stone-300 cursor-not-allowed line-through bg-stone-50/50'
-                      : 'border-stone-200 text-stone-700 hover:border-stone-950'
-                  }`}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Size alerts & stock information */}
-          {sizeWarning && (
-            <p className="text-[11px] text-red-700 font-bold uppercase tracking-wider">
-              Please choose a size to continue.
-            </p>
-          )}
-
-          {selectedSize && activeSizeStock > 0 && activeSizeStock <= 5 && (
-            <p className="text-[11px] text-amber-700 font-bold uppercase tracking-wider">
-              Running Low! Only {activeSizeStock} left in stock.
-            </p>
-          )}
-        </div>
-
-        {/* Quantity selector */}
-        {selectedSize && activeSizeStock > 0 && (
-          <div className="space-y-2.5 pt-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-stone-900">
-              Quantity
-            </span>
-            <div className="flex items-center border border-stone-200 rounded-sm w-fit bg-white">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-3 py-2 text-stone-600 hover:text-stone-900"
-              >
-                -
-              </button>
-              <span className="text-xs font-semibold px-4">{quantity}</span>
-              <button
-                onClick={() => setQuantity(Math.min(activeSizeStock, quantity + 1))}
-                className="px-3 py-2 text-stone-600 hover:text-stone-900"
-              >
-                +
-              </button>
+          {/* Best Price capsule */}
+          <div className="bg-emerald-50 border border-success/15 py-3 px-4 rounded-sm flex items-center space-x-2">
+            <span className="bg-success text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-2xs">%</span>
+            <div className="text-[10px] font-bold text-success uppercase tracking-wider">
+              Best price with coupon code: <span className="font-black text-xs text-stone-900">{formatPrice(bestPriceVal)}</span>
             </div>
           </div>
-        )}
 
-        {/* Product Identity System */}
-        <div className="bg-stone-900 border border-stone-850 p-4.5 rounded-sm space-y-3.5 text-xs text-stone-300 font-sans tracking-wide">
-          <span className="text-[9px] text-stone-500 font-bold uppercase tracking-[0.25em] block border-b border-stone-800 pb-1.5 font-syne">
-            HOUSE IDENTITY RECORD
-          </span>
-          <div className="grid grid-cols-2 gap-y-2 text-[10px] font-bold uppercase tracking-widest text-stone-400">
-            <div>Piece Ref:</div>
-            <div className="text-white font-mono">AVK/{product.slug.substring(0, 3).toUpperCase()}-{product.id.substring(0, 4).toUpperCase()}</div>
-            <div>Identity:</div>
-            <div className="text-stone-200">{product.category?.name || 'MINIMAL OVERSIZED'}</div>
-            <div>Fabric Specs:</div>
-            <div className="text-stone-200">{product.gsm} | {product.fabric}</div>
-            <div>Provenance:</div>
-            <div className="text-stone-200">Ahmedabad, India</div>
-            <div>Release Series:</div>
-            <div className="text-stone-200">Collection 01</div>
-            <div>Scarcity Status:</div>
-            <div className="text-lime-400 font-extrabold">{sizes.reduce((sum, sz) => sum + getStock(sz), 0) || 117} / 300 remaining</div>
-          </div>
-          <p className="text-[9px] text-amber-500 font-semibold uppercase tracking-widest pt-1.5 border-t border-stone-800">
-            No restocks. No compromise.
+          {/* Short info description */}
+          <p className="text-xs text-stone-600 leading-relaxed font-light">
+            {product.description}
           </p>
-        </div>
 
-        {/* Checkout CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-2">
-          <button
-            onClick={() => handleAddToCart(false)}
-            disabled={adding}
-            className="flex-grow bg-white border border-stone-950 text-stone-950 text-[10px] font-bold uppercase tracking-widest py-4 hover:bg-stone-950 hover:text-white transition-all duration-300 rounded-xs flex items-center justify-center space-x-2 sound-click sound-hover"
-          >
-            <ShoppingBag className="h-4.5 w-4.5" />
-            <span>{adding ? 'RESERVING...' : 'RESERVE PIECE'}</span>
-          </button>
-          
-          <button
-            onClick={() => handleAddToCart(true)}
-            disabled={adding}
-            className="flex-grow bg-stone-950 border border-stone-950 text-white text-[10px] font-bold uppercase tracking-widest py-4 hover:opacity-90 transition-all rounded-xs sound-click sound-hover"
-          >
-            ACQUIRE PIECE
-          </button>
-        </div>
+          {/* Size selection row */}
+          <div className="space-y-3 pt-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold uppercase tracking-wider text-stone-900">
+                Choose Size
+              </span>
+              <button
+                onClick={() => setSizeGuideOpen(true)}
+                className="text-secondary hover:text-stone-950 cursor-pointer underline tracking-wider font-semibold flex items-center space-x-1"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+                <span>Fit Helper / Size Chart</span>
+              </button>
+            </div>
 
-        {/* THE CRAFT CARD */}
-        <div className="bg-stone-50 border border-stone-200/60 p-4.5 rounded-sm space-y-4 shadow-xs">
-          <h3 className="font-syne font-bold uppercase text-stone-900 text-[9px] tracking-[0.2em] border-b border-stone-150 pb-2">
-            THE CRAFT & MANUFACTURING
-          </h3>
-          <div className="grid grid-cols-4 gap-2.5 text-center font-sans">
-            <div className="space-y-1">
-              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">240g</p>
-              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">GSM Supima</p>
+            <div className="flex flex-wrap gap-2.5">
+              {sizes.map((size) => {
+                const stock = getStock(size);
+                const isAvailable = stock > 0;
+                return (
+                  <button
+                    key={size}
+                    disabled={!isAvailable}
+                    onClick={() => {
+                      setSelectedSize(size);
+                      setSizeWarning(false);
+                    }}
+                    className={`border font-semibold text-xs px-5 py-3 rounded-sm flex items-center justify-center transition-colors uppercase ${
+                      selectedSize === size
+                        ? 'bg-stone-950 text-white border-stone-950 shadow-sm'
+                        : !isAvailable
+                        ? 'border-stone-100 text-stone-300 cursor-not-allowed line-through bg-stone-50/50'
+                        : 'border-stone-250 text-stone-700 hover:border-stone-950'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
-            <div className="space-y-1">
-              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">14h</p>
-              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Manufacturing</p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">7x</p>
-              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Quality checks</p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-syne font-bold text-stone-900 text-xs sm:text-sm">100%</p>
-              <p className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Hand finished</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Details accordion sheets */}
-        <div className="border-t border-stone-200 mt-6 pt-4 space-y-3">
-          {/* Tab switches */}
-          <div className="flex space-x-6 border-b border-stone-100 pb-2 text-xs font-bold uppercase tracking-wider">
-            <button
-              onClick={() => setActiveTab('details')}
-              className={`${activeTab === 'details' ? 'text-stone-900 border-b border-stone-900 pb-2.5' : 'text-stone-400'}`}
-            >
-              Details
-            </button>
-            <button
-              onClick={() => setActiveTab('specs')}
-              className={`${activeTab === 'specs' ? 'text-stone-900 border-b border-stone-900 pb-2.5' : 'text-stone-400'}`}
-            >
-              Fabric Specs
-            </button>
-            <button
-              onClick={() => setActiveTab('wash')}
-              className={`${activeTab === 'wash' ? 'text-stone-900 border-b border-stone-900 pb-2.5' : 'text-stone-400'}`}
-            >
-              Wash Care
-            </button>
-          </div>
-
-          <div className="py-2 text-[11px] sm:text-xs text-stone-600 leading-relaxed font-light">
-            {activeTab === 'details' && (
-              <p>
-                ARVIIK street fit features dropped shoulders, a tighter collar lock, and structured length that sits perfectly on trousers or cargo pants. Handcrafted details. Double stitch hemline.
+            {/* Size alerts & stocks warnings */}
+            {sizeWarning && (
+              <p className="text-[11px] text-sale font-black uppercase tracking-wider">
+                Please select a size to proceed.
               </p>
             )}
 
-            {activeTab === 'specs' && (
-              <ul className="space-y-1.5 list-disc list-inside">
-                <li><strong className="font-semibold">Fabric:</strong> {product.fabric}</li>
-                <li><strong className="font-semibold">Weight:</strong> {product.gsm}</li>
-                <li><strong className="font-semibold">Fit Silhouette:</strong> {product.fit_type}</li>
-              </ul>
+            {selectedSize && activeSizeStock > 0 && activeSizeStock <= 5 && (
+              <p className="text-[11px] text-amber-700 font-bold uppercase tracking-wider">
+                Running Low! Only {activeSizeStock} left in stock.
+              </p>
             )}
-
-            {activeTab === 'wash' && (
-              <p>{product.wash_instructions}</p>
+            
+            {selectedSize && activeSizeStock === 0 && (
+              <p className="text-[11px] text-sale font-bold uppercase tracking-wider">
+                {selectedSize} is SOLD OUT.
+              </p>
             )}
           </div>
-        </div>
 
-        {/* Quality Badges */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-100 text-[10px] text-stone-500 uppercase tracking-widest font-semibold">
-          <div className="flex items-center space-x-2">
-            <Truck className="h-4 w-4 text-stone-400" />
-            <span>Free Delivery &gt; ₹1500</span>
+          {/* D2C conversion card */}
+          <div className="bg-stone-900 border border-stone-850 p-4.5 rounded-sm space-y-3.5 text-xs text-stone-300 font-sans tracking-wide">
+            <span className="text-[9px] text-stone-500 font-bold uppercase tracking-[0.25em] block border-b border-stone-800 pb-1.5 font-syne">
+              PRODUCT SPECIFICATIONS
+            </span>
+            <div className="grid grid-cols-2 gap-y-2 text-[10px] font-bold uppercase tracking-widest text-stone-400">
+              <div>Fabric Weave:</div>
+              <div className="text-stone-200">{product.fabric}</div>
+              <div>Thread Spec:</div>
+              <div className="text-stone-200">{product.gsm}</div>
+              <div>Cut Style:</div>
+              <div className="text-stone-200">{product.fit_type}</div>
+              <div>Wash Care:</div>
+              <div className="text-stone-200">{product.wash_instructions}</div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Info className="h-4 w-4 text-stone-400" />
-            <span>Secure Checkout</span>
-          </div>
-        </div>
 
+          {/* Action CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+            <button
+              onClick={() => handleAddToCart(false)}
+              disabled={adding}
+              className="flex-grow bg-white border border-stone-950 text-stone-950 text-[10px] font-bold uppercase tracking-widest py-4 hover:bg-stone-950 hover:text-white transition-all duration-300 rounded-xs flex items-center justify-center space-x-2"
+            >
+              <ShoppingBag className="h-4.5 w-4.5" />
+              <span>{adding ? 'RESERVING...' : 'ADD TO BAG'}</span>
+            </button>
+            
+            <button
+              onClick={() => handleAddToCart(true)}
+              disabled={adding}
+              className="flex-grow bg-secondary border border-secondary text-white text-[10px] font-bold uppercase tracking-widest py-4 hover:opacity-90 transition-all rounded-xs"
+            >
+              BUY IT NOW
+            </button>
+          </div>
+
+          {/* Brand trust icons */}
+          <div className="grid grid-cols-3 gap-2.5 text-center text-stone-600 font-bold text-[9px] uppercase tracking-wider py-4 border-t border-stone-150">
+            <div className="space-y-1">
+              <Award className="h-4 w-4 text-accent mx-auto" />
+              <p>Premium Cotton</p>
+            </div>
+            <div className="space-y-1">
+              <RefreshCw className="h-4 w-4 text-accent mx-auto" />
+              <p>7-Day Returns</p>
+            </div>
+            <div className="space-y-1">
+              <Truck className="h-4 w-4 text-accent mx-auto" />
+              <p>Free Delivery &gt; 999</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Dynamic Recommendation Engine Strip */}
+      <ProductRecommendation currentProduct={product as any} />
+
+      {/* Review list */}
+      <Review />
+
+      {/* Size recommendation guides modal */}
+      <SizeGuide isOpen={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+
+      {/* Mobile Sticky CTA footer (under 768px viewport) */}
+      <div className="md:hidden fixed bottom-14 left-0 w-full bg-white border-t border-stone-200 py-2.5 px-4 z-40 flex space-x-3.5 shadow-2xl">
+        <button
+          onClick={() => handleAddToCart(false)}
+          className="flex-1 bg-white border border-stone-950 text-stone-950 text-[10px] font-black uppercase tracking-widest py-3 rounded-xs"
+        >
+          ADD TO BAG
+        </button>
+        <button
+          onClick={() => handleAddToCart(true)}
+          className="flex-1 bg-secondary text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xs"
+        >
+          BUY NOW
+        </button>
       </div>
     </div>
   );
