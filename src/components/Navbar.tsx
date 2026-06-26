@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { ShoppingBag, Heart, User, Menu, X, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 import MegaMenu from './Navigation/MegaMenu';
 import MobileMenu from './Navigation/MobileMenu';
 
@@ -20,6 +21,7 @@ export default function Navbar() {
   const [announcementIdx, setAnnouncementIdx] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSettings, setActiveSettings] = useState<any>({});
 
   const announcements = [
     "⚡ Prepaid Orders Will Be Shipped On Priority",
@@ -43,6 +45,32 @@ export default function Navbar() {
     return () => window.removeEventListener('open-search', handleSearchOpenEvent);
   }, []);
 
+  // Fetch settings dynamically
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const stored = localStorage.getItem('arviik_custom_settings');
+        if (stored) {
+          setActiveSettings(JSON.parse(stored));
+        }
+
+        const { data } = await supabase.from('site_settings').select('*');
+        if (data && data.length > 0) {
+          const settingsMap = data.reduce((acc: any, item: any) => {
+            acc[item.key] = item.value;
+            return acc;
+          }, {});
+          setActiveSettings(settingsMap);
+          localStorage.setItem('arviik_custom_settings', JSON.stringify(settingsMap));
+        }
+      } catch (e) {
+        console.error('Failed to load settings in navbar:', e);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   // Skip rendering Navbar on Admin Panel routes
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -56,11 +84,67 @@ export default function Navbar() {
     window.dispatchEvent(event);
   };
 
+  // Determine dynamic classes based on background theme config
+  const bgConfig = activeSettings?.general_config || {};
+  const bgStyleVal = bgConfig.bg_style || 'default';
+  const customBgColorVal = bgConfig.custom_bg_color || '#fafaf9';
+
+  let headerBgClass = 'bg-white border-stone-200 text-stone-900';
+  let navTextClass = 'text-stone-900 hover:text-secondary';
+  let iconColorClass = 'text-stone-900 hover:text-secondary';
+  let announcementBgColor = '#106bc5';
+  let announcementTextColor = 'text-white';
+
+  const isDarkCustom = () => {
+    if (bgStyleVal !== 'custom-color') return false;
+    const c = (customBgColorVal || '').replace('#', '');
+    if (c.length !== 6) return false;
+    const rgb = parseInt(c, 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = (rgb >> 0) & 0xff;
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return luma < 135;
+  };
+
+  const isDark = bgStyleVal === 'charcoal' || isDarkCustom();
+
+  if (bgStyleVal === 'charcoal') {
+    headerBgClass = 'bg-stone-950 border-stone-900 text-white';
+    navTextClass = 'text-stone-300 hover:text-[#ffd200]';
+    iconColorClass = 'text-stone-100 hover:text-[#ffd200]';
+    announcementBgColor = '#000000';
+  } else if (bgStyleVal === 'sepia') {
+    headerBgClass = 'bg-[#f4efe6] border-stone-300/60 text-stone-900';
+    navTextClass = 'text-stone-850 hover:text-secondary';
+    iconColorClass = 'text-stone-850 hover:text-secondary';
+    announcementBgColor = '#604c3f';
+  } else if (bgStyleVal === 'custom-color') {
+    headerBgClass = `border-stone-200/60`;
+    if (isDark) {
+      headerBgClass += ' text-white';
+      navTextClass = 'text-stone-300 hover:text-white';
+      iconColorClass = 'text-stone-100 hover:text-stone-300';
+      announcementBgColor = '#121212';
+    } else {
+      headerBgClass += ' text-stone-900';
+      navTextClass = 'text-stone-800 hover:text-secondary';
+      iconColorClass = 'text-stone-900 hover:text-secondary';
+      announcementBgColor = '#106bc5';
+    }
+  }
+
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-40 bg-white border-b border-stone-200">
+      <header 
+        className={`fixed top-0 left-0 w-full z-40 border-b transition-colors duration-300 ${headerBgClass}`}
+        style={{ backgroundColor: bgStyleVal === 'custom-color' ? customBgColorVal : undefined }}
+      >
         {/* Dynamic Announcement Bar */}
-        <div className="bg-[#106bc5] text-white py-2 text-center text-xs font-black tracking-wider uppercase select-none transition-all duration-300">
+        <div 
+          className="text-white py-2 text-center text-xs font-black tracking-wider uppercase select-none transition-all duration-300"
+          style={{ backgroundColor: announcementBgColor }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={announcementIdx}
@@ -77,26 +161,28 @@ export default function Navbar() {
         {/* Main Navbar */}
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between relative">
           
-          {/* Left section: Hamburger (mobile) + Logo */}
-          <div className="flex items-center space-x-3.5">
+          {/* Left section: Hamburger (mobile) */}
+          <div className="flex items-center space-x-3.5 z-10">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden text-stone-900 focus:outline-none p-1"
+              style={{ color: isDark ? '#ffffff' : undefined }}
             >
               <Menu className="h-6 w-6" />
             </button>
-            
-            <Link
-              href="/"
-              className="flex items-center select-none"
-            >
-              <img
-                src="/logo.jpg"
-                alt="ARVIIK Logo"
-                className="h-10 w-auto object-contain mix-blend-multiply"
-              />
-            </Link>
           </div>
+          
+          {/* Centered Logo (Mobile/Desktop adaptive) */}
+          <Link
+            href="/"
+            className="flex items-center select-none absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 md:relative md:left-auto md:top-auto md:transform-none"
+          >
+            <img
+              src="/logo.jpg"
+              alt="ARVIIK Logo"
+              className="h-8 md:h-10 w-auto object-contain mix-blend-multiply"
+            />
+          </Link>
 
           {/* Center section: Mega Menu hover link row (Desktop Only) */}
           <nav className="hidden md:flex items-center space-x-8 text-xs font-black tracking-widest uppercase select-none">
@@ -105,43 +191,43 @@ export default function Navbar() {
               onMouseEnter={() => setShowMegaMenu(true)}
               onMouseLeave={() => setShowMegaMenu(false)}
             >
-              <span className="text-stone-900 hover:text-secondary transition-colors">MEN</span>
+              <span className={navTextClass}>MEN</span>
               {showMegaMenu && <MegaMenu onClose={() => setShowMegaMenu(false)} />}
             </div>
 
-            <Link href="/shop?tag=NEW+ARRIVAL" className="text-stone-900 hover:text-secondary transition-colors">
+            <Link href="/shop?tag=NEW+ARRIVAL" className={navTextClass}>
               NEW ARRIVALS
             </Link>
 
-            <Link href="/shop?category=Oversized+T-Shirts" className="text-stone-900 hover:text-secondary transition-colors">
+            <Link href="/shop?category=Oversized+T-Shirts" className={navTextClass}>
               OVERSIZED T-SHIRTS
             </Link>
 
-            <Link href="/shop?category=Graphic+Prints" className="text-stone-900 hover:text-secondary transition-colors">
+            <Link href="/shop?category=Graphic+Prints" className={navTextClass}>
               GRAPHIC PRINTS
             </Link>
 
-            <Link href="/shop?category=Minimalist+Typo" className="text-stone-900 hover:text-secondary transition-colors">
+            <Link href="/shop?category=Minimalist+Typo" className={navTextClass}>
               MINIMALIST TYPO
             </Link>
 
-            <Link href="/shop?tag=BESTSELLER" className="text-stone-900 hover:text-secondary transition-colors text-sale">
+            <Link href="/shop?tag=BESTSELLER" className={`${navTextClass} text-sale`}>
               BESTSELLERS
             </Link>
           </nav>
 
           {/* Right section: Action Icons */}
-          <div className="flex items-center space-x-4 sm:space-x-5">
+          <div className="flex items-center space-x-3 md:space-x-5 z-10">
             <button
               onClick={() => setSearchOpen(true)}
-              className="text-stone-900 hover:text-secondary transition-opacity p-1 cursor-pointer"
+              className={`transition-opacity p-1 cursor-pointer ${iconColorClass}`}
             >
               <Search className="h-5 w-5" />
             </button>
 
             <Link
               href="/wishlist"
-              className="text-stone-900 hover:text-secondary transition-opacity relative p-1 hidden sm:block"
+              className={`transition-opacity relative p-1 ${iconColorClass}`}
             >
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
@@ -153,14 +239,14 @@ export default function Navbar() {
 
             <Link
               href={user ? '/account' : '/login'}
-              className="text-stone-900 hover:text-secondary transition-opacity p-1 hidden sm:block"
+              className={`transition-opacity p-1 hidden md:block ${iconColorClass}`}
             >
               <User className="h-5 w-5" />
             </Link>
 
             <button
               onClick={triggerCartOpen}
-              className="text-stone-900 hover:text-secondary transition-opacity relative p-1"
+              className={`transition-opacity relative p-1 ${iconColorClass}`}
             >
               <ShoppingBag className="h-5 w-5" />
               {totalCartItems > 0 && (

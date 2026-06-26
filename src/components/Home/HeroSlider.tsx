@@ -52,11 +52,9 @@ export default function HeroSlider() {
       setCurrentIdx((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
-
-  return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 select-none">
-      <div className="relative w-full h-[55vh] sm:h-[65vh] bg-stone-950 rounded-2xl overflow-hidden shadow-xs">
+  }, [slides.length]);  return (
+    <section className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pt-0 sm:pt-4 pb-2 select-none">
+      <div className="relative w-full h-[45vh] sm:h-[65vh] bg-stone-950 rounded-none sm:rounded-2xl overflow-hidden shadow-xs">
         {/* Slides view wrapper */}
         <div className="absolute inset-0">
           <AnimatePresence mode="wait">
@@ -76,7 +74,7 @@ export default function HeroSlider() {
               />
               {/* Dark tint gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30" />
-
+ 
               {/* Slide content overlay */}
               <div className="absolute inset-0 flex items-center justify-start text-left p-6 sm:p-12 md:p-16">
                 <div className="max-w-2xl space-y-4">
@@ -89,13 +87,13 @@ export default function HeroSlider() {
                   >
                     {slides[currentIdx].sub}
                   </motion.p>
-
+ 
                   {/* Big Heading */}
                   <motion.h1
                     initial={{ opacity: 0, y: 25 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
-                    className="font-syne font-black text-3xl sm:text-5xl lg:text-6xl leading-none text-white uppercase tracking-wider text-shadow-retro"
+                    className="font-syne font-black text-2xl sm:text-5xl lg:text-6xl leading-none text-white uppercase tracking-wider text-shadow-retro"
                   >
                     {slides[currentIdx].title.includes('|') ? (
                       <>
@@ -108,17 +106,17 @@ export default function HeroSlider() {
                       slides[currentIdx].title
                     )}
                   </motion.h1>
-
+ 
                   {/* Button CTA */}
                   <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.4 }}
-                    className="pt-4"
+                    className="pt-2"
                   >
                     <Link
                       href={slides[currentIdx].href}
-                      className={`inline-block font-syne font-black text-[11px] sm:text-xs tracking-[0.2em] px-8 py-3.5 rounded-full uppercase shadow-lg transform transition-transform active:scale-95 ${slides[currentIdx].btnColor}`}
+                      className={`inline-block font-syne font-black text-[10px] sm:text-xs tracking-[0.2em] px-6 sm:px-8 py-3 sm:py-3.5 rounded-full uppercase shadow-lg transform transition-transform active:scale-95 ${slides[currentIdx].btnColor}`}
                     >
                       {slides[currentIdx].btnText}
                     </Link>
@@ -128,7 +126,7 @@ export default function HeroSlider() {
             </motion.div>
           </AnimatePresence>
         </div>
-
+ 
         {/* Diamond Indicators */}
         <div className="absolute bottom-6 left-0 w-full flex justify-center items-center space-x-3.5 z-10">
           {slides.map((_, idx) => (
