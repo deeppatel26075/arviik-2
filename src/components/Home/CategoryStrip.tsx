@@ -41,8 +41,8 @@ export default function CategoryStrip() {
             href={item.href}
             className="flex flex-col items-center flex-shrink-0 w-24 sm:w-28 group"
           >
-            {/* Arched U-Shape Image container: rounded-t-full as in Veirdo photo */}
-            <div className="relative w-20 h-28 sm:w-22 sm:h-30 rounded-t-full overflow-hidden border border-stone-200/60 bg-stone-50 shadow-2xs group-hover:shadow-xs transition-shadow duration-300">
+            {/* Circular Image container */}
+            <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden border border-stone-200/60 bg-stone-50 shadow-2xs group-hover:shadow-xs transition-shadow duration-300">
               <img
                 src={item.image}
                 alt={item.label}

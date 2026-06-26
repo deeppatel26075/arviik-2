@@ -25,7 +25,7 @@ export default function Navbar() {
 
   const announcements = [
     "⚡ Prepaid Orders Will Be Shipped On Priority",
-    "🔥 Oversized Tees SALE | Buy Any 3 @1199",
+    "🔥 Premium Oversized Tees | Starting From ₹899",
     "⚡ FREE SHIPPING ACROSS INDIA",
     "⚡ EASY RETURNS & COD AVAILABLE"
   ];
