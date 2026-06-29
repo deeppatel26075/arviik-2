@@ -8,22 +8,27 @@ export default function CategoryStrip() {
     {
       label: 'OVERSIZED TEES',
       image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=300',
-      href: '/shop'
+      href: '/shop?category=Oversized+T-Shirts'
     },
     {
-      label: 'GRAPHIC PRINTS',
+      label: 'GRAPHIC TEES',
       image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=300',
       href: '/shop?category=Graphic+Prints'
     },
     {
-      label: 'MINIMALIST TYPO',
-      image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300',
-      href: '/shop?category=Minimalist+Typo'
+      label: 'HOODIES & SWEATSHIRTS',
+      image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=300',
+      href: '/shop?category=Hoodies'
     },
     {
-      label: 'TRENDING DROPS',
+      label: 'JOGGERS & CARGOS',
       image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=300',
-      href: '/shop?tag=BESTSELLER'
+      href: '/shop?category=Joggers'
+    },
+    {
+      label: 'CO-ORD SETS',
+      image: 'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?q=80&w=300',
+      href: '/shop?category=Co-ords'
     }
   ];
 

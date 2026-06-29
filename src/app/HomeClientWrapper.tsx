@@ -291,7 +291,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
             <div className="relative z-10 space-y-2 max-w-xs sm:max-w-sm">
-              <span className="text-[9px] text-[#00e676] font-black tracking-[0.25em] uppercase">
+              <span className="text-[9px] text-[#c4f135] font-black tracking-[0.25em] uppercase">
                 SUPREME EDITION
               </span>
               <h3 className="font-syne font-black text-xl sm:text-3xl leading-none uppercase tracking-wider">
@@ -301,7 +301,7 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
                 Clean architectural structures. Minimalist typography and puff print drops.
               </p>
               <div className="pt-1.5">
-                <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-white text-stone-950 px-4 py-2 rounded-full group-hover:bg-[#00e676] transition-colors">
+                <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-white text-stone-950 px-4 py-2 rounded-full group-hover:bg-[#c4f135] transition-colors">
                   View Collection
                 </span>
               </div>
