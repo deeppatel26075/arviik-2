@@ -20,11 +20,11 @@ export default function HeroSlider() {
   const slides: Slide[] = [
     {
       id: 1,
-      image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=1600',
+      image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1600',
       sub: 'OVERSIZED PRINTED T-SHIRTS',
-      title: 'STARTING FROM | ₹899',
+      title: 'BUY ANY 3 | AT ₹1199',
       btnText: 'SHOP NOW',
-      btnColor: 'bg-[#e11d48] text-white hover:bg-rose-700',
+      btnColor: 'bg-red-600 text-white hover:bg-red-700',
       href: '/shop'
     },
     {

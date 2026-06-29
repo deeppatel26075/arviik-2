@@ -24,10 +24,10 @@ export default function Navbar() {
   const [activeSettings, setActiveSettings] = useState<any>({});
 
   const announcements = [
+    "Plus Size T-Shirts (Buy Any 3 & Get ₹300 Off)",
     "⚡ Prepaid Orders Will Be Shipped On Priority",
-    "🔥 Premium Oversized Tees | Starting From ₹899",
-    "⚡ FREE SHIPPING ACROSS INDIA",
-    "⚡ EASY RETURNS & COD AVAILABLE"
+    "🔥 Buy Any 3 Oversized Tees For ₹1199",
+    "⚡ FREE SHIPPING Across India | COD Available"
   ];
 
   // Rotate announcement messages

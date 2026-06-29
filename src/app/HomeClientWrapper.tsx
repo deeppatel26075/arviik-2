@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
+import CategoryStrip from '@/components/Home/CategoryStrip';
 import HeroSlider from '@/components/Home/HeroSlider';
 import TrustRibbon from '@/components/Home/TrustRibbon';
 import RecentlyViewed from '@/components/Commerce/RecentlyViewed';
@@ -163,18 +164,21 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
       {/* 2. Hero Slider */}
       <HeroSlider />
 
+      {/* Category Strip */}
+      <CategoryStrip />
+
       {/* 3. Trust Ribbon */}
       <TrustRibbon />
 
       {/* 4. OUR BESTSELLERS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10 select-none">
-        <div className="text-center">
-          <span className={`text-[10px] ${subTextClass} font-bold tracking-[0.3em] uppercase`}>
-            Hot Right Now
-          </span>
-          <h2 className={`font-syne font-black text-2xl uppercase tracking-wider ${textClass} mt-1`}>
-            Our Bestsellers
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6 select-none">
+        <div className="flex items-baseline justify-start select-none border-b border-stone-150/60 pb-3.5 mb-2">
+          <h2 className={`font-syne font-black text-lg uppercase tracking-wider ${textClass}`}>
+            T Shirt for Men
           </h2>
+          <span className="text-xs text-stone-400 font-bold ml-2.5">
+            90 items
+          </span>
         </div>
 
         {/* Products Grid */}

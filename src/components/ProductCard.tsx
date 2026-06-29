@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div
-      className="group relative flex flex-col bg-white border border-stone-200 rounded-sm overflow-hidden shadow-2xs hover:shadow-sm transition-shadow duration-300 select-none"
+      className="group relative flex flex-col bg-white border border-stone-200 rounded-xl overflow-hidden shadow-2xs hover:shadow-sm transition-shadow duration-300 select-none"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -131,25 +131,29 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </button>
 
-        {/* Top-Left Bestseller tag: Solid green background as in Veirdo photo */}
-        <span className="absolute top-2.5 left-2.5 z-10 bg-[#0f8a5f] text-white text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-xs shadow-xs">
-          BEST SELLER
-        </span>
+        {/* Top-Left Bestseller / Buy 3 tags */}
+        {product.slug.includes('farebi') || product.slug.includes('lost') ? (
+          <span className="absolute top-2.5 left-2.5 z-10 bg-[#0f8a5f] text-white text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-xs shadow-xs">
+            BEST SELLER
+          </span>
+        ) : (
+          <span className="absolute top-2.5 left-2.5 z-10 bg-[#2a2d34] text-white text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-xs shadow-xs">
+            BUY 3 @1199
+          </span>
+        )}
 
-        {/* Bottom-Left Rating Badges */}
-        <div className="absolute bottom-2.5 left-2.5 z-10 bg-white/95 px-2 py-0.5 rounded-full flex items-center space-x-1 text-[9px] font-bold text-stone-850 shadow-xs border border-stone-100">
-          <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-          <span>{product.rating || 4.5}</span>
-          <span className="text-stone-300">|</span>
-          <span className="text-stone-500 font-semibold">{product.reviews || 320}</span>
+        {/* Bottom-Left Rating Badges with transparent black background as in Veirdo screenshot */}
+        <div className="absolute bottom-2.5 left-2.5 z-10 bg-black/45 backdrop-blur-xs px-2 py-0.5 rounded-full flex items-center space-x-1 text-[9px] font-bold text-white shadow-xs border border-white/10">
+          <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
+          <span>{product.rating || (product.slug.includes('farebi') ? 4.6 : 4.4)}</span>
+          <span className="text-white/20">|</span>
+          <span className="text-white/80 font-semibold">{product.reviews || (product.slug.includes('farebi') ? 275 : 73)}</span>
         </div>
 
-        {/* Bottom-Right Color Swatches indicators */}
-        <div className="absolute bottom-2.5 right-2.5 z-10 bg-white/95 px-2 py-0.5 rounded-full flex items-center space-x-1 text-[9px] font-bold text-stone-500 shadow-xs border border-stone-100">
-          <div className="flex space-x-0.5">
-            <span className="w-2 h-2 rounded-full bg-amber-100 border border-stone-300 inline-block" />
-            <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />
-          </div>
+        {/* Bottom-Right Color Swatches indicators with transparent black background */}
+        <div className="absolute bottom-2.5 right-2.5 z-10 bg-black/45 backdrop-blur-xs px-2 py-0.5 rounded-full flex items-center space-x-1.5 text-[9px] font-bold text-white shadow-xs border border-white/10">
+          <span className={`w-1.5 h-1.5 rounded-full ${product.slug.includes('farebi') ? 'bg-stone-950' : 'bg-[#e5e5e7]'} border border-white/40 inline-block`} />
+          <span>1</span>
         </div>
 
         {/* Primary/Secondary Image swaps */}
