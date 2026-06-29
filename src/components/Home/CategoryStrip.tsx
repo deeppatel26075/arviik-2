@@ -24,11 +24,6 @@ export default function CategoryStrip() {
       label: 'TRENDING DROPS',
       image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=300',
       href: '/shop?tag=BESTSELLER'
-    },
-    {
-      label: 'NEW RELEASES',
-      image: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=300',
-      href: '/shop?tag=NEW+ARRIVAL'
     }
   ];
 
