@@ -44,8 +44,8 @@ export default function MobileMenu({ isOpen, onClose, isAdmin }: MobileMenuProps
       >
         {/* Drawer Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-[#d2e5f5] mb-4">
-          <span className="text-[10px] font-black tracking-widest uppercase text-stone-500">
-            Navigation
+          <span className="font-syne font-black text-sm tracking-[0.2em] uppercase text-stone-900 leading-none">
+            ARVIIK
           </span>
           <button 
             onClick={onClose} 

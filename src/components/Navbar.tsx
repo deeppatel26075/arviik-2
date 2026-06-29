@@ -177,11 +177,9 @@ export default function Navbar() {
             href="/"
             className="flex items-center select-none absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 md:relative md:left-auto md:top-auto md:transform-none"
           >
-            <img
-              src="/logo.png"
-              alt="ARVIIK Logo"
-              className="h-8 md:h-10 w-auto object-contain mix-blend-multiply"
-            />
+            <span className={`font-syne font-black text-lg md:text-xl tracking-[0.25em] uppercase transition-colors duration-300 ${isDark ? 'text-white' : 'text-stone-950'}`}>
+              ARVIIK
+            </span>
           </Link>
 
           {/* Center section: Mega Menu hover link row (Desktop Only) */}
