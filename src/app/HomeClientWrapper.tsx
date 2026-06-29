@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import HeroSlider from '@/components/Home/HeroSlider';
-import TrustRibbon from '@/components/Home/TrustRibbon';
 import RecentlyViewed from '@/components/Commerce/RecentlyViewed';
 import { Star, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -162,9 +161,6 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
       {/* 2. Hero Slider */}
       <HeroSlider />
-
-      {/* 3. Trust Ribbon */}
-      <TrustRibbon />
 
       {/* 4. OUR BESTSELLERS SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6 select-none">

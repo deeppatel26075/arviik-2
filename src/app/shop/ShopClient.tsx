@@ -58,8 +58,30 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCat);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [priceSort, setPriceSort] = useState<string>(''); // 'low-high' | 'high-low' | ''
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [priceRange, setPriceRange] = useState<string>(''); // 'under-599' | '599-999' | '1000-1499' | 'over-1500' | ''
+  const [selectedFit, setSelectedFit] = useState<string>(''); // 'Oversized Fit' | 'Regular Fit' | ''
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
+
+  const colorsList = [
+    { name: 'Black', hex: '#000000' },
+    { name: 'White', hex: '#FFFFFF' },
+    { name: 'Olive', hex: '#556B2F' },
+    { name: 'Navy', hex: '#000080' },
+    { name: 'Maroon', hex: '#800000' },
+    { name: 'Orange', hex: '#FFA500' },
+    { name: 'Grey', hex: '#808080' }
+  ];
+
+  const priceRanges = [
+    { value: 'under-599', label: 'Under ₹599' },
+    { value: '599-999', label: '₹599 - ₹999' },
+    { value: '1000-1499', label: '₹1000 - ₹1499' },
+    { value: 'over-1500', label: 'Over ₹1500' }
+  ];
+
+  const fits = ['Oversized Fit', 'Regular Fit'];
 
   // Pagination count state
   const [visibleCount, setVisibleCount] = useState(12);
@@ -187,7 +209,7 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
   // Reset pagination count when filter parameters change
   useEffect(() => {
     setVisibleCount(12);
-  }, [searchQuery, selectedCategory, selectedSize, priceSort]);
+  }, [searchQuery, selectedCategory, selectedSize, priceSort, selectedColor, priceRange, selectedFit]);
 
   // Apply filters whenever states change
   useEffect(() => {
@@ -228,6 +250,36 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
       });
     }
 
+    // 4b. Color Filter
+    if (selectedColor) {
+      filtered = filtered.filter((p) => {
+        const nameMatch = p.name.toLowerCase().includes(selectedColor.toLowerCase());
+        const descMatch = p.description?.toLowerCase().includes(selectedColor.toLowerCase());
+        return nameMatch || descMatch;
+      });
+    }
+
+    // 4c. Price Range Filter
+    if (priceRange) {
+      filtered = filtered.filter((p) => {
+        const itemPrice = p.discount_price || p.price;
+        if (priceRange === 'under-599') return itemPrice < 599;
+        if (priceRange === '599-999') return itemPrice >= 599 && itemPrice <= 999;
+        if (priceRange === '1000-1499') return itemPrice >= 1000 && itemPrice <= 1499;
+        if (priceRange === 'over-1500') return itemPrice > 1500;
+        return true;
+      });
+    }
+
+    // 4d. Fit Filter
+    if (selectedFit) {
+      filtered = filtered.filter((p) => {
+        const nameMatch = p.name.toLowerCase().includes(selectedFit.toLowerCase());
+        const descMatch = p.description?.toLowerCase().includes(selectedFit.toLowerCase());
+        return nameMatch || descMatch;
+      });
+    }
+
     // 5. Price Sorting
     if (priceSort === 'low-high') {
       filtered.sort((a, b) => {
@@ -244,12 +296,15 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
     }
 
     setProducts(filtered);
-  }, [searchQuery, selectedCategory, selectedSize, priceSort, localProducts, initialFilter]);
+  }, [searchQuery, selectedCategory, selectedSize, priceSort, selectedColor, priceRange, selectedFit, localProducts, initialFilter]);
 
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
     setSelectedSize('');
+    setSelectedColor('');
+    setPriceRange('');
+    setSelectedFit('');
     setPriceSort('');
   };
 
@@ -503,8 +558,78 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
             </div>
           </div>
 
+          {/* Color Filter */}
+          <div className="space-y-3">
+            <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+              Colors
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              {colorsList.map((color) => (
+                <button
+                  key={color.name}
+                  onClick={() => setSelectedColor(selectedColor === color.name ? '' : color.name)}
+                  title={color.name}
+                  className={`w-7 h-7 rounded-full border flex items-center justify-center transition-transform hover:scale-108 focus:outline-none ${
+                    selectedColor === color.name
+                      ? 'border-stone-900 ring-2 ring-stone-900/30 scale-108'
+                      : 'border-stone-200/60'
+                  }`}
+                  style={{ backgroundColor: color.hex }}
+                >
+                  {selectedColor === color.name && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${color.name === 'White' ? 'bg-stone-950' : 'bg-white'}`} />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price Range Filter */}
+          <div className="space-y-3">
+            <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+              Price Range
+            </h3>
+            <div className="flex flex-col space-y-2 text-xs">
+              {priceRanges.map((range) => (
+                <button
+                  key={range.value}
+                  onClick={() => setPriceRange(priceRange === range.value ? '' : range.value)}
+                  className={`text-left py-1 hover:opacity-85 transition-opacity uppercase tracking-wider ${
+                    priceRange === range.value
+                      ? `font-bold ${isDarkTheme ? 'text-white' : 'text-stone-950'}`
+                      : `${isDarkTheme ? 'text-stone-400' : 'text-stone-500'} font-medium`
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Fit Filter */}
+          <div className="space-y-3">
+            <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+              Fit
+            </h3>
+            <div className="flex flex-col space-y-2 text-xs">
+              {fits.map((fit) => (
+                <button
+                  key={fit}
+                  onClick={() => setSelectedFit(selectedFit === fit ? '' : fit)}
+                  className={`text-left py-1 hover:opacity-85 transition-opacity uppercase tracking-wider ${
+                    selectedFit === fit
+                      ? `font-bold ${isDarkTheme ? 'text-white' : 'text-stone-950'}`
+                      : `${isDarkTheme ? 'text-stone-400' : 'text-stone-500'} font-medium`
+                  }`}
+                >
+                  {fit}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Clear Filters Button */}
-          {(selectedCategory || selectedSize || searchQuery || priceSort) && (
+          {(selectedCategory || selectedSize || searchQuery || priceSort || selectedColor || priceRange || selectedFit) && (
             <button
               onClick={clearFilters}
               className={`w-full text-[10px] font-bold uppercase tracking-widest py-3 rounded-xs transition-colors ${
@@ -743,8 +868,83 @@ export default function ShopClient({ initialProducts, categories, settings }: Sh
                   </div>
                 </div>
 
+                {/* Colors (Mobile) */}
+                <div className="space-y-3">
+                  <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+                    Colors
+                  </h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {colorsList.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => setSelectedColor(selectedColor === color.name ? '' : color.name)}
+                        className={`w-7 h-7 rounded-full border flex items-center justify-center transition-transform ${
+                          selectedColor === color.name
+                            ? 'border-stone-950 ring-2 ring-stone-950/30'
+                            : 'border-stone-250/60'
+                        }`}
+                        style={{ backgroundColor: color.hex }}
+                      >
+                        {selectedColor === color.name && (
+                          <span className={`w-1.5 h-1.5 rounded-full ${color.name === 'White' ? 'bg-stone-950' : 'bg-white'}`} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range (Mobile) */}
+                <div className="space-y-3">
+                  <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+                    Price Range
+                  </h3>
+                  <div className="flex flex-col space-y-2 text-xs">
+                    {priceRanges.map((range) => (
+                      <button
+                        key={range.value}
+                        onClick={() => {
+                          setPriceRange(priceRange === range.value ? '' : range.value);
+                          setMobileFiltersOpen(false);
+                        }}
+                        className={`text-left py-1 uppercase tracking-wider ${
+                          priceRange === range.value
+                            ? `font-bold ${isDarkTheme ? 'text-white' : 'text-stone-950'}`
+                            : `${isDarkTheme ? 'text-stone-400' : 'text-stone-500'} font-medium`
+                        }`}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Fit (Mobile) */}
+                <div className="space-y-3">
+                  <h3 className={`font-syne font-bold uppercase text-xs tracking-wider border-b ${sidebarHeaderClass} pb-2`}>
+                    Fit
+                  </h3>
+                  <div className="flex flex-col space-y-2 text-xs">
+                    {fits.map((fit) => (
+                      <button
+                        key={fit}
+                        onClick={() => {
+                          setSelectedFit(selectedFit === fit ? '' : fit);
+                          setMobileFiltersOpen(false);
+                        }}
+                        className={`text-left py-1 uppercase tracking-wider ${
+                          selectedFit === fit
+                            ? `font-bold ${isDarkTheme ? 'text-white' : 'text-stone-950'}`
+                            : `${isDarkTheme ? 'text-stone-400' : 'text-stone-500'} font-medium`
+                        }`}
+                      >
+                        {fit}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Clear */}
-                {(selectedCategory || selectedSize || searchQuery || priceSort) && (
+                {(selectedCategory || selectedSize || searchQuery || priceSort || selectedColor || priceRange || selectedFit) && (
                   <button
                     onClick={() => {
                       clearFilters();
