@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import CategoryStrip from '@/components/Home/CategoryStrip';
 import HeroSlider from '@/components/Home/HeroSlider';
 import TrustRibbon from '@/components/Home/TrustRibbon';
 import RecentlyViewed from '@/components/Commerce/RecentlyViewed';
@@ -160,8 +159,6 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
       className={`w-full space-y-0 ${isDarkTheme ? 'bg-stone-950 text-white' : bgStyleVal === 'sepia' ? 'bg-[#f4efe6]' : bgStyleVal === 'custom-color' ? '' : 'bg-white'}`}
       style={{ backgroundColor: bgStyleVal === 'custom-color' ? customBgColorVal : undefined }}
     >
-      {/* 1. Category Strip */}
-      <CategoryStrip />
 
       {/* 2. Hero Slider */}
       <HeroSlider />
