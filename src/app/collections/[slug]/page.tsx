@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { PRODUCTS } from '@/data/products';
-import ShopClient from '@/app/shop/ShopClient';
+import CollectionClient from './CollectionClient';
 import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -68,18 +68,18 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   if (slug === 'oversized' || slug === 'oversized-t-shirts') {
     filteredProducts = allProducts;
     collectionTitle = 'Oversized Collection';
-  } else if (slug === 'graphic-prints' || slug === 'graphic-tees') {
+  } else if (slug === 'graphic-prints' || slug === 'graphic-tees' || slug === 'epic-thread') {
     filteredProducts = allProducts.filter(
       p => p.category?.toLowerCase() === 'graphic prints' || 
            p.category?.name?.toLowerCase() === 'graphic prints'
     );
-    collectionTitle = 'Graphic Printed Collection';
-  } else if (slug === 'minimalist-typo' || slug === 'minimalist-tees') {
+    collectionTitle = 'Epic Thread';
+  } else if (slug === 'minimalist-typo' || slug === 'minimalist-tees' || slug === 'supreme-edition') {
     filteredProducts = allProducts.filter(
       p => p.category?.toLowerCase() === 'minimalist typo' || 
            p.category?.name?.toLowerCase() === 'minimalist typo'
     );
-    collectionTitle = 'Minimalist Typo Collection';
+    collectionTitle = 'Supreme Edition';
   } else if (slug === 'plus-size') {
     filteredProducts = allProducts.filter(
       p => p.category?.toLowerCase() === 'plus size' || 
@@ -95,27 +95,17 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="border-b border-stone-200 pb-5 mb-8">
-        <span className="text-[10px] text-stone-400 font-bold tracking-[0.3em] uppercase">
-          ARVIIK Collections
-        </span>
-        <h1 className="font-syne font-black text-3xl uppercase tracking-wider text-stone-900 mt-1">
-          {collectionTitle}
-        </h1>
+    <Suspense fallback={
+      <div className="flex justify-center items-center py-20 text-xs font-bold uppercase tracking-widest text-stone-400">
+        Loading collection...
       </div>
-
-      <Suspense fallback={
-        <div className="flex justify-center items-center py-20 text-xs font-bold uppercase tracking-widest text-stone-400">
-          Loading collection...
-        </div>
-      }>
-        <ShopClient 
-          initialProducts={filteredProducts as any} 
-          categories={finalCategories as any} 
-          settings={settingsMap}
-        />
-      </Suspense>
-    </div>
+    }>
+      <CollectionClient 
+        initialProducts={filteredProducts as any} 
+        collectionTitle={collectionTitle}
+        slug={slug}
+        settings={settingsMap}
+      />
+    </Suspense>
   );
 }
