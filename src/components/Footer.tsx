@@ -31,7 +31,7 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-3.5 inline-block rounded-xs">
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="ARVIIK Logo"
                 className="h-10 w-auto object-contain"
               />
