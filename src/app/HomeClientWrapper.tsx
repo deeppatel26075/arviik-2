@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import CategoryStrip from '@/components/Home/CategoryStrip';
 import HeroSlider from '@/components/Home/HeroSlider';
 import TrustRibbon from '@/components/Home/TrustRibbon';
 import RecentlyViewed from '@/components/Commerce/RecentlyViewed';
@@ -163,9 +162,6 @@ export default function HomeClientWrapper({ products, settings }: HomeClientWrap
 
       {/* 2. Hero Slider */}
       <HeroSlider />
-
-      {/* Category Strip */}
-      <CategoryStrip />
 
       {/* 3. Trust Ribbon */}
       <TrustRibbon />
